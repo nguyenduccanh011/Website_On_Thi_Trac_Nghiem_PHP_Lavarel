@@ -13,14 +13,12 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('users', function (Blueprint $table) {
-            $table->id('user_id');
-            $table->string('username');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->string('role')->default('user');
-            $table->rememberToken();
+        Schema::create('leaderboard', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->references('user_id')->on('users')->onDelete('cascade');
+            $table->foreignId('exam_id')->references('exam_id')->on('exams')->onDelete('cascade');
+            $table->integer('score');
+            $table->integer('rank');
             $table->timestamps();
         });
     }
@@ -32,6 +30,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('leaderboard');
     }
 };
