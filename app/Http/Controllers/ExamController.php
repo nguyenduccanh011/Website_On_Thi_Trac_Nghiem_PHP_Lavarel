@@ -48,8 +48,16 @@ class ExamController extends Controller
             'medium_question_count' => 'required|integer|min:0',
             'hard_question_count' => 'required|integer|min:0',
             'description' => 'nullable|string',
-            'category_id' => 'required|exists:exam_categories,category_id'
+            'category_id' => 'required|exists:exam_categories,category_id',
+            'duration' => 'required|integer|min:1',
+            'total_marks' => 'required|integer|min:1',
+            'passing_marks' => 'required|integer|min:1',
+            'is_active' => 'required|boolean'
         ]);
+
+        // Map exam_name thành title
+        $validated['title'] = $validated['exam_name'];
+        unset($validated['exam_name']);
 
         $exam = Exam::create($validated);
 
@@ -81,7 +89,8 @@ class ExamController extends Controller
     public function edit(Exam $exam)
     {
         $categories = ExamCategory::all();
-        return view('exams.edit', compact('exam', 'categories'));
+        $subjects = Subject::all();
+        return view('exams.edit', compact('exam', 'categories', 'subjects'));
     }
 
     /**

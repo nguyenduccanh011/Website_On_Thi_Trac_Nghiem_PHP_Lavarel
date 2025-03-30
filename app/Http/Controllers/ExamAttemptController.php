@@ -79,12 +79,17 @@ class ExamAttemptController extends Controller
         }
 
         // Load dữ liệu với eager loading
-        $attempt->load(['exam.questions']);
+        $attempt->load(['exam.questions', 'userAnswers']);
 
         // Kiểm tra xem có câu hỏi không
         if (!$attempt->exam || !$attempt->exam->questions || $attempt->exam->questions->isEmpty()) {
             return redirect()->route('exams.index')
                 ->with('error', 'Bài thi này chưa có câu hỏi.');
+        }
+
+        // Nếu bài thi đã được nộp, hiển thị kết quả
+        if ($attempt->end_time) {
+            return view('exam_attempts.result', compact('attempt'));
         }
 
         return view('exam_attempts.show', compact('attempt'));
@@ -164,29 +169,40 @@ class ExamAttemptController extends Controller
 
         // Tính điểm
         $totalQuestions = $attempt->total_questions;
-        $score = ($correctCount / $totalQuestions) * 100;
+        $score = ($correctCount / $totalQuestions) * $attempt->exam->total_marks;
 
         // Cập nhật kết quả bài thi
         $attempt->update([
             'end_time' => now(),
             'score' => $score,
             'correct_answers' => $correctCount,
-            'incorrect_answers' => $incorrectCount
+            'incorrect_answers' => $incorrectCount,
+            'status' => $score >= $attempt->exam->passing_marks ? 'completed' : 'failed'
         ]);
 
         // Cập nhật bảng xếp hạng
         $this->updateLeaderboard($attempt);
 
-        return redirect()->route('exam_attempts.show', $attempt)
+        // Load dữ liệu câu hỏi và câu trả lời
+        $attempt->load(['exam.questions', 'userAnswers']);
+
+        return view('exam_attempts.result', compact('attempt'))
             ->with('success', 'Bài thi đã được nộp thành công.');
     }
 
     private function updateLeaderboard(ExamAttempt $attempt)
     {
-        $leaderboard = Leaderboard::firstOrCreate([
-            'user_id' => $attempt->user_id,
-            'exam_id' => $attempt->exam_id
-        ]);
+        $leaderboard = Leaderboard::firstOrCreate(
+            [
+                'user_id' => $attempt->user_id,
+                'exam_id' => $attempt->exam_id
+            ],
+            [
+                'score' => $attempt->score,
+                'last_attempt_date' => now(),
+                'rank' => 0
+            ]
+        );
         
         $leaderboard->update([
             'score' => $attempt->score,

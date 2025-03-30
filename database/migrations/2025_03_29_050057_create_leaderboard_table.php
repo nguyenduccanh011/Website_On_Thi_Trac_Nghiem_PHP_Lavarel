@@ -19,6 +19,7 @@ return new class extends Migration
             $table->foreignId('exam_id')->references('exam_id')->on('exams')->onDelete('cascade');
             $table->integer('score');
             $table->integer('rank');
+            $table->timestamp('last_attempt_date');
             $table->timestamps();
         });
     }

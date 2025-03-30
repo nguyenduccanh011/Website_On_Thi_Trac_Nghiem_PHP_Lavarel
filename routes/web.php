@@ -8,6 +8,7 @@ use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\ExamAttemptController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\ExamCategoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -53,4 +54,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Routes cho Leaderboard
     Route::resource('leaderboard', LeaderboardController::class)->only(['index', 'show']);
+
+    // Quản lý chủ đề thi
+    Route::resource('exam-categories', ExamCategoryController::class);
 });
