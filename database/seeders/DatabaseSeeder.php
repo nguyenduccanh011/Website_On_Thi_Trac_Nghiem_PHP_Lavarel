@@ -4,13 +4,15 @@ namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use App\Models\ExamCategory;
-use App\Models\Exam;
+use App\Models\Category;
+use App\Models\ExamBank;
 use App\Models\Question;
+use App\Models\Exam;
 use App\Models\ExamQuestion;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -35,14 +37,28 @@ class DatabaseSeeder extends Seeder
         DB::table('exam_questions')->truncate();
         DB::table('questions')->truncate();
         DB::table('exams')->truncate();
-        DB::table('exam_categories')->truncate();
+        DB::table('exam_banks')->truncate();
+        DB::table('categories')->truncate();
         DB::table('users')->truncate();
 
         // Bật lại kiểm tra khóa ngoại
         Schema::enableForeignKeyConstraints();
 
-        // Chạy UsersTableSeeder
-        $this->call(UsersTableSeeder::class);
+        // Tạo tài khoản admin
+        User::create([
+            'username' => 'admin',
+            'email' => 'admin@example.com',
+            'password' => Hash::make('password'),
+            'role' => 'admin',
+        ]);
+
+        // Tạo tài khoản user thường
+        User::create([
+            'username' => 'user',
+            'email' => 'user@example.com',
+            'password' => Hash::make('password'),
+            'role' => 'user',
+        ]);
 
         // Tạo danh mục mẫu
         $categories = [
@@ -53,72 +69,67 @@ class DatabaseSeeder extends Seeder
 
         $createdCategories = [];
         foreach ($categories as $category) {
-            $cat = ExamCategory::create($category);
-            dump("Created category with ID: " . $cat->category_id);
+            $cat = Category::create($category);
             $createdCategories[] = $cat;
         }
 
-        // Tạo bài thi mẫu
-        $exams = [
+        // Tạo ngân hàng đề thi mẫu
+        $examBanks = [
             [
-                'title' => 'TOEIC Practice Test 1',
-                'description' => 'Bài thi TOEIC mẫu 1',
-                'category_id' => $createdCategories[0]->category_id,
-                'duration' => 120,
-                'total_marks' => 990,
-                'passing_marks' => 600,
-                'is_active' => true
+                'bank_name' => 'TOEIC Reading Practice',
+                'category_id' => $createdCategories[0]->id,
+                'description' => 'Ngân hàng câu hỏi đọc hiểu TOEIC',
+                'difficulty_level' => 'medium',
+                'total_questions' => 0
             ],
             [
-                'title' => 'IELTS Academic Test 1',
-                'description' => 'Bài thi IELTS Academic mẫu 1',
-                'category_id' => $createdCategories[1]->category_id,
-                'duration' => 180,
-                'total_marks' => 9,
-                'passing_marks' => 6,
-                'is_active' => true
+                'bank_name' => 'IELTS Writing Practice',
+                'category_id' => $createdCategories[1]->id,
+                'description' => 'Ngân hàng câu hỏi viết IELTS',
+                'difficulty_level' => 'hard',
+                'total_questions' => 0
             ]
         ];
 
-        dump("First exam category_id: " . $exams[0]['category_id']);
-        dump("Second exam category_id: " . $exams[1]['category_id']);
-
-        $createdExams = [];
-        foreach ($exams as $exam) {
-            $createdExams[] = Exam::create($exam);
+        $createdExamBanks = [];
+        foreach ($examBanks as $bank) {
+            $createdExamBanks[] = ExamBank::create($bank);
         }
 
         // Tạo câu hỏi mẫu
         $questions = [
             [
-                'exam_id' => $createdExams[0]->exam_id,
                 'question_text' => 'What is the capital of France?',
                 'option_a' => 'London',
                 'option_b' => 'Paris',
                 'option_c' => 'Berlin',
                 'option_d' => 'Madrid',
                 'correct_answer' => 'B',
-                'marks' => 1
+                'explanation' => 'Paris is the capital city of France.',
+                'exam_bank_id' => $createdExamBanks[0]->id,
+                'difficulty_level' => 'easy'
             ],
             [
-                'exam_id' => $createdExams[0]->exam_id,
                 'question_text' => 'Which language is most widely spoken in the world?',
                 'option_a' => 'English',
                 'option_b' => 'Spanish',
                 'option_c' => 'Mandarin Chinese',
                 'option_d' => 'Hindi',
                 'correct_answer' => 'C',
-                'marks' => 1
+                'explanation' => 'Mandarin Chinese is the most widely spoken language in the world.',
+                'exam_bank_id' => $createdExamBanks[0]->id,
+                'difficulty_level' => 'medium'
             ],
             [
-                'exam_id' => $createdExams[1]->exam_id,
                 'question_text' => 'What is the largest planet in our solar system?',
                 'option_a' => 'Mars',
                 'option_b' => 'Venus',
                 'option_c' => 'Jupiter',
                 'option_d' => 'Saturn',
                 'correct_answer' => 'C',
-                'marks' => 1
+                'explanation' => 'Jupiter is the largest planet in our solar system.',
+                'exam_bank_id' => $createdExamBanks[1]->id,
+                'difficulty_level' => 'easy'
             ]
         ];
 
@@ -127,22 +138,48 @@ class DatabaseSeeder extends Seeder
             $createdQuestions[] = Question::create($question);
         }
 
-        // Liên kết câu hỏi với bài thi
+        // Cập nhật số lượng câu hỏi trong ngân hàng
+        foreach ($createdExamBanks as $bank) {
+            $bank->total_questions = Question::where('exam_bank_id', $bank->id)->count();
+            $bank->save();
+        }
+
+        // Tạo đề thi mẫu
+        $exams = [
+            [
+                'exam_name' => 'TOEIC Practice Test 1',
+                'category_id' => $createdCategories[0]->id,
+                'description' => 'Bài thi TOEIC mẫu 1',
+                'time_limit' => 120,
+                'total_marks' => 990,
+            ],
+            [
+                'exam_name' => 'IELTS Academic Test 1',
+                'category_id' => $createdCategories[1]->id,
+                'description' => 'Bài thi IELTS Academic mẫu 1',
+                'time_limit' => 180,
+                'total_marks' => 9,
+            ]
+        ];
+
+        $createdExams = [];
+        foreach ($exams as $exam) {
+            $createdExams[] = Exam::create($exam);
+        }
+
+        // Liên kết câu hỏi với đề thi
         $examQuestions = [
             [
-                'exam_id' => $createdExams[0]->exam_id,
-                'question_id' => $createdQuestions[0]->question_id,
-                'question_order' => 1
+                'exam_id' => $createdExams[0]->id,
+                'question_id' => $createdQuestions[0]->id,
             ],
             [
-                'exam_id' => $createdExams[0]->exam_id,
-                'question_id' => $createdQuestions[1]->question_id,
-                'question_order' => 2
+                'exam_id' => $createdExams[0]->id,
+                'question_id' => $createdQuestions[1]->id,
             ],
             [
-                'exam_id' => $createdExams[1]->exam_id,
-                'question_id' => $createdQuestions[2]->question_id,
-                'question_order' => 1
+                'exam_id' => $createdExams[1]->id,
+                'question_id' => $createdQuestions[2]->id,
             ]
         ];
 

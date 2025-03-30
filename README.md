@@ -113,113 +113,130 @@ Dự án này là một ứng dụng web được xây dựng bằng PHP và fra
 * **Hệ quản trị cơ sở dữ liệu:** MySQL / MariaDB
 * **Tên Database (mặc định):** `exam_online`
 
-* **Cấu trúc các bảng:** (Dựa trên SQL dump cung cấp)
+* **Cấu trúc các bảng:**
 
     * **`users`:** Lưu thông tin người dùng
         * `user_id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
-        * `username` (`VARCHAR(50)`, UNIQUE, NOT NULL)
-        * `password` (`VARCHAR(255)`, NOT NULL) - *Đã được hash*
-        * `email` (`VARCHAR(100)`, UNIQUE, NOT NULL)
-        * `full_name` (`VARCHAR(100)`)
-        * `registration_date` (`DATETIME`, DEFAULT NULL)
-        * `last_login` (`DATETIME`, DEFAULT NULL)
-        * `role` (`ENUM('user', 'admin')`, DEFAULT 'user')
-        * `profile_picture` (`VARCHAR(255)`, DEFAULT NULL)
-        * `resetToken` (`VARCHAR(255)`, DEFAULT NULL)
-        * `resetTokenExpires` (`DATETIME`, DEFAULT NULL)
-        * `createdAt` (`DATETIME`, NOT NULL) - *Lưu ý: Laravel mặc định dùng `created_at`*
-        * `updatedAt` (`DATETIME`, NOT NULL) - *Lưu ý: Laravel mặc định dùng `updated_at`*
+        * `username` (`VARCHAR(255)`, NOT NULL)
+        * `email` (`VARCHAR(255)`, UNIQUE, NOT NULL)
+        * `email_verified_at` (`TIMESTAMP`, NULL)
+        * `password` (`VARCHAR(255)`, NOT NULL)
+        * `role` (`VARCHAR(255)`, DEFAULT 'user')
+        * `remember_token` (`VARCHAR(100)`, NULL)
+        * `created_at` (`TIMESTAMP`, NULL)
+        * `updated_at` (`TIMESTAMP`, NULL)
 
-    * **`exam_categories`:** Lưu trữ thông tin về các danh mục đề thi
-        * `category_id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
-        * `category_name` (`VARCHAR(100)`, UNIQUE, NOT NULL)
-        * `description` (`TEXT`, DEFAULT NULL)
-        * `created_at` (`DATETIME`, DEFAULT NULL)
-        * `updated_at` (`DATETIME`, DEFAULT NULL)
+    * **`categories`:** Lưu trữ thông tin về các danh mục đề thi
+        * `id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
+        * `name` (`VARCHAR(255)`, NOT NULL)
+        * `description` (`TEXT`, NULL)
+        * `created_at` (`TIMESTAMP`, NULL)
+        * `updated_at` (`TIMESTAMP`, NULL)
+
+    * **`exam_banks`:** Lưu trữ thông tin về các ngân hàng đề thi
+        * `id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
+        * `bank_name` (`VARCHAR(255)`, NOT NULL)
+        * `category_id` (`INT`, FOREIGN KEY `categories`)
+        * `description` (`TEXT`, NULL)
+        * `difficulty_level` (`ENUM('easy', 'medium', 'hard')`)
+        * `total_questions` (`INT`, DEFAULT 0)
+        * `created_at` (`TIMESTAMP`, NULL)
+        * `updated_at` (`TIMESTAMP`, NULL)
 
     * **`questions`:** Lưu trữ các câu hỏi trắc nghiệm
-        * `question_id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
+        * `id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
         * `question_text` (`TEXT`, NOT NULL)
-        * `correct_answer` (`VARCHAR(255)`, NOT NULL) - *Lưu ý: Có thể lưu text đáp án đúng để hiển thị nhanh, việc check đúng/sai nên dựa vào bảng `answers`*
-        * `category_id` (`INT`, NOT NULL, FOREIGN KEY `exam_categories`)
-        * `difficulty` (`ENUM('easy', 'medium', 'hard')`, DEFAULT NULL)
-        * `explanation` (`TEXT`, DEFAULT NULL)
-        * `created_at` (`DATETIME`, DEFAULT NULL)
-        * `updated_at` (`DATETIME`, DEFAULT NULL)
-
-    * **`answers`:** Lưu trữ các đáp án của câu hỏi
-        * `answer_id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
-        * `answer_text` (`VARCHAR(255)`, NOT NULL)
-        * `question_id` (`INT`, NOT NULL, FOREIGN KEY `questions`)
-        * `is_correct` (`TINYINT(1)`, NOT NULL, DEFAULT 0) - *1 là đúng, 0 là sai*
-        * `created_at` (`DATETIME`, DEFAULT NULL)
-        * `updated_at` (`DATETIME`, DEFAULT NULL)
+        * `exam_bank_id` (`INT`, FOREIGN KEY `exam_banks`)
+        * `created_at` (`TIMESTAMP`, NULL)
+        * `updated_at` (`TIMESTAMP`, NULL)
 
     * **`exams`:** Lưu trữ thông tin về các đề thi
-        * `exam_id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
-        * `exam_name` (`VARCHAR(100)`, NOT NULL)
-        * `easy_question_count` (`INT`, DEFAULT 0) - *Số câu dễ trong đề*
-        * `medium_question_count` (`INT`, DEFAULT 0) - *Số câu trung bình trong đề*
-        * `hard_question_count` (`INT`, DEFAULT 0) - *Số câu khó trong đề*
-        * `description` (`TEXT`, DEFAULT NULL)
-        * `category_id` (`INT`, NOT NULL, FOREIGN KEY `exam_categories`)
-        * `created_at` (`DATETIME`, DEFAULT NULL)
-        * `updated_at` (`DATETIME`, DEFAULT NULL)
+        * `id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
+        * `exam_name` (`VARCHAR(255)`, NOT NULL)
+        * `category_id` (`INT`, FOREIGN KEY `categories`)
+        * `description` (`TEXT`, NULL)
+        * `time_limit` (`INT`, NULL)
+        * `total_marks` (`INT`, NULL)
+        * `created_at` (`TIMESTAMP`, NULL)
+        * `updated_at` (`TIMESTAMP`, NULL)
 
-    * **`exam_questions`:** Quan hệ nhiều-nhiều giữa `exams` và `questions` (Lưu các câu hỏi *cụ thể* được chọn cho một lần làm bài thi, có thể được tạo động khi bắt đầu thi)
-        * `exam_question_id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
-        * `exam_id` (`INT`, NOT NULL, FOREIGN KEY `exams`) - *Tham chiếu đến đề thi gốc*
-        * `question_id` (`INT`, NOT NULL, FOREIGN KEY `questions`)
-        * `question_order` (`INT`, DEFAULT NULL) - *Thứ tự câu hỏi trong lần thi cụ thể đó*
-        * `createdAt` (`DATETIME`, NOT NULL)
-        * `updatedAt` (`DATETIME`, NOT NULL)
-        * *Lưu ý: Bảng này có thể cần được xem xét lại logic. Nếu `exams` đã định nghĩa cấu trúc (số câu dễ/TB/khó), thì bảng này có thể dùng để lưu tập câu hỏi *ngẫu nhiên* được tạo ra cho *một lần làm bài cụ thể* (`exam_attempts`) thay vì liên kết trực tiếp với `exams`.*
+    * **`exam_questions`:** Quan hệ nhiều-nhiều giữa `exams` và `questions`
+        * `id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
+        * `exam_id` (`INT`, FOREIGN KEY `exams`)
+        * `question_id` (`INT`, FOREIGN KEY `questions`)
+        * `created_at` (`TIMESTAMP`, NULL)
+        * `updated_at` (`TIMESTAMP`, NULL)
 
     * **`exam_attempts`:** Lưu trữ thông tin về các lần thi của người dùng
-        * `attempt_id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
-        * `user_id` (`INT`, NOT NULL, FOREIGN KEY `users`)
-        * `exam_id` (`INT`, NOT NULL, FOREIGN KEY `exams`) - *Tham chiếu đến đề thi gốc*
-        * `start_time` (`DATETIME`, DEFAULT NULL)
-        * `end_time` (`DATETIME`, DEFAULT NULL)
-        * `score` (`DECIMAL(5, 2)`, DEFAULT NULL)
-        * `total_questions` (`INT`, DEFAULT NULL) - *Tổng số câu trong lần thi đó*
-        * `correct_answers` (`INT`, DEFAULT NULL) - *Số câu trả lời đúng*
-        * `incorrect_answers` (`INT`, DEFAULT NULL) - *Số câu trả lời sai*
-        * `createdAt` (`DATETIME`, NOT NULL)
-        * `updatedAt` (`DATETIME`, NOT NULL)
+        * `id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
+        * `user_id` (`INT`, FOREIGN KEY `users`)
+        * `exam_id` (`INT`, FOREIGN KEY `exams`)
+        * `start_time` (`TIMESTAMP`, NULL)
+        * `end_time` (`TIMESTAMP`, NULL)
+        * `score` (`DECIMAL(5,2)`, NULL)
+        * `status` (`VARCHAR(255)`, NULL)
+        * `created_at` (`TIMESTAMP`, NULL)
+        * `updated_at` (`TIMESTAMP`, NULL)
 
-    * **`user_answers`:** Lưu trữ chi tiết câu trả lời của người dùng trong mỗi lần thi
-        * `user_answer_id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
-        * `attempt_id` (`INT`, NOT NULL, FOREIGN KEY `exam_attempts`)
-        * `question_id` (`INT`, NOT NULL, FOREIGN KEY `questions`)
-        * `selected_answer` (`VARCHAR(255)`, DEFAULT NULL) - *Lưu ID hoặc text của đáp án người dùng chọn*
-        * `is_correct` (`TINYINT(1)`, DEFAULT NULL) - *Lưu kết quả đúng/sai của câu trả lời này*
-        * `createdAt` (`DATETIME`, NOT NULL)
-        * `updatedAt` (`DATETIME`, NOT NULL)
+    * **`user_answers`:** Lưu trữ chi tiết câu trả lời của người dùng
+        * `id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
+        * `exam_attempt_id` (`INT`, FOREIGN KEY `exam_attempts`)
+        * `question_id` (`INT`, FOREIGN KEY `questions`)
+        * `selected_answer` (`TEXT`, NULL)
+        * `is_correct` (`BOOLEAN`, NULL)
+        * `created_at` (`TIMESTAMP`, NULL)
+        * `updated_at` (`TIMESTAMP`, NULL)
 
     * **`leaderboard`:** Lưu trữ thông tin bảng xếp hạng người dùng
-        * `leaderboard_id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
-        * `user_id` (`INT`, NOT NULL, FOREIGN KEY `users`)
-        * `score` (`DECIMAL(10, 2)`, DEFAULT NULL) - *Có thể là điểm trung bình hoặc cao nhất*
-        * `rank` (`INT`, DEFAULT NULL)
-        * `last_attempt_date` (`DATETIME`, DEFAULT NULL)
-        * `createdAt` (`DATETIME`, NOT NULL)
-        * `updatedAt` (`DATETIME`, NOT NULL)
+        * `id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
+        * `user_id` (`INT`, FOREIGN KEY `users`)
+        * `score` (`DECIMAL(10,2)`, NULL)
+        * `rank` (`INT`, NULL)
+        * `last_attempt_date` (`TIMESTAMP`, NULL)
+        * `created_at` (`TIMESTAMP`, NULL)
+        * `updated_at` (`TIMESTAMP`, NULL)
 
-    * **`forum_topics`:** Lưu trữ các chủ đề thảo luận trên diễn đàn
-        * `topic_id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
-        * `user_id` (`INT`, NOT NULL, FOREIGN KEY `users`)
+    * **`forum_topics`:** Lưu trữ các chủ đề thảo luận
+        * `id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
+        * `user_id` (`INT`, FOREIGN KEY `users`)
         * `title` (`VARCHAR(255)`, NOT NULL)
-        * `created_at` (`DATETIME`, DEFAULT NULL)
-        * `updated_at` (`DATETIME`, DEFAULT NULL)
-
-    * **`forum_posts`:** Lưu trữ các bài viết trong từng chủ đề thảo luận
-        * `post_id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
-        * `topic_id` (`INT`, NOT NULL, FOREIGN KEY `forum_topics`)
-        * `user_id` (`INT`, NOT NULL, FOREIGN KEY `users`)
         * `content` (`TEXT`, NOT NULL)
-        * `created_at` (`DATETIME`, DEFAULT NULL)
-        * `updated_at` (`DATETIME`, DEFAULT NULL)
+        * `created_at` (`TIMESTAMP`, NULL)
+        * `updated_at` (`TIMESTAMP`, NULL)
+
+    * **`forum_posts`:** Lưu trữ các bài viết trong chủ đề
+        * `id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
+        * `topic_id` (`INT`, FOREIGN KEY `forum_topics`)
+        * `user_id` (`INT`, FOREIGN KEY `users`)
+        * `content` (`TEXT`, NOT NULL)
+        * `created_at` (`TIMESTAMP`, NULL)
+        * `updated_at` (`TIMESTAMP`, NULL)
+
+    * **`password_resets`:** Lưu trữ thông tin reset mật khẩu
+        * `email` (`VARCHAR(255)`, PRIMARY KEY)
+        * `token` (`VARCHAR(255)`, NOT NULL)
+        * `created_at` (`TIMESTAMP`, NULL)
+
+    * **`failed_jobs`:** Lưu trữ thông tin về các job thất bại
+        * `id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
+        * `uuid` (`VARCHAR(255)`, UNIQUE, NOT NULL)
+        * `connection` (`TEXT`, NOT NULL)
+        * `queue` (`TEXT`, NOT NULL)
+        * `payload` (`LONGTEXT`, NOT NULL)
+        * `exception` (`LONGTEXT`, NOT NULL)
+        * `failed_at` (`TIMESTAMP`, NOT NULL)
+
+    * **`personal_access_tokens`:** Lưu trữ token truy cập cá nhân
+        * `id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
+        * `tokenable_type` (`VARCHAR(255)`, NOT NULL)
+        * `tokenable_id` (`BIGINT`, NOT NULL)
+        * `name` (`VARCHAR(255)`, NOT NULL)
+        * `token` (`VARCHAR(64)`, UNIQUE, NOT NULL)
+        * `abilities` (`TEXT`, NULL)
+        * `last_used_at` (`TIMESTAMP`, NULL)
+        * `expires_at` (`TIMESTAMP`, NULL)
+        * `created_at` (`TIMESTAMP`, NULL)
+        * `updated_at` (`TIMESTAMP`, NULL)
 
 ## Giao diện người dùng (dự kiến)
 
@@ -296,9 +313,6 @@ Mọi đóng góp để cải thiện dự án đều được chào đón. Vui 
 * **Trần LiêU Huy Khánh** -
 * **Trần Lê Bảo Trung** - 
 * **Phan Trọng Thuận** - 
-
-
-
 
 ## License
 Dự án này được phân phối dưới giấy phép MIT. Xem file `LICENSE` để biết thêm chi tiết.
