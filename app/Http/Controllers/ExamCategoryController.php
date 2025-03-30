@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ExamCategory;
 use Illuminate\Http\Request;
 
 class ExamCategoryController extends Controller
@@ -14,8 +13,7 @@ class ExamCategoryController extends Controller
      */
     public function index()
     {
-        $categories = ExamCategory::paginate(10);
-        return view('exam_categories.index', compact('categories'));
+        //
     }
 
     /**
@@ -25,7 +23,7 @@ class ExamCategoryController extends Controller
      */
     public function create()
     {
-        return view('exam_categories.create');
+        //
     }
 
     /**
@@ -36,15 +34,7 @@ class ExamCategoryController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:exam_categories',
-            'description' => 'nullable|string'
-        ]);
-
-        ExamCategory::create($validated);
-
-        return redirect()->route('exam-categories.index')
-            ->with('success', 'Chủ đề thi đã được tạo thành công.');
+        //
     }
 
     /**
@@ -53,10 +43,9 @@ class ExamCategoryController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show(ExamCategory $examCategory)
+    public function show($id)
     {
-        $exams = $examCategory->exams()->paginate(10);
-        return view('exam_categories.show', compact('examCategory', 'exams'));
+        //
     }
 
     /**
@@ -65,9 +54,9 @@ class ExamCategoryController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit(ExamCategory $examCategory)
+    public function edit($id)
     {
-        return view('exam_categories.edit', compact('examCategory'));
+        //
     }
 
     /**
@@ -77,17 +66,9 @@ class ExamCategoryController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, ExamCategory $examCategory)
+    public function update(Request $request, $id)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:exam_categories,name,' . $examCategory->category_id . ',category_id',
-            'description' => 'nullable|string'
-        ]);
-
-        $examCategory->update($validated);
-
-        return redirect()->route('exam-categories.index')
-            ->with('success', 'Chủ đề thi đã được cập nhật thành công.');
+        //
     }
 
     /**
@@ -96,11 +77,8 @@ class ExamCategoryController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(ExamCategory $examCategory)
+    public function destroy($id)
     {
-        $examCategory->delete();
-
-        return redirect()->route('exam-categories.index')
-            ->with('success', 'Chủ đề thi đã được xóa thành công.');
+        //
     }
 }

@@ -169,15 +169,14 @@ class ExamAttemptController extends Controller
 
         // Tính điểm
         $totalQuestions = $attempt->total_questions;
-        $score = ($correctCount / $totalQuestions) * $attempt->exam->total_marks;
+        $score = ($correctCount / $totalQuestions) * 100;
 
         // Cập nhật kết quả bài thi
         $attempt->update([
             'end_time' => now(),
             'score' => $score,
             'correct_answers' => $correctCount,
-            'incorrect_answers' => $incorrectCount,
-            'status' => $score >= $attempt->exam->passing_marks ? 'completed' : 'failed'
+            'incorrect_answers' => $incorrectCount
         ]);
 
         // Cập nhật bảng xếp hạng
@@ -199,8 +198,7 @@ class ExamAttemptController extends Controller
             ],
             [
                 'score' => $attempt->score,
-                'last_attempt_date' => now(),
-                'rank' => 0
+                'last_attempt_date' => now()
             ]
         );
         

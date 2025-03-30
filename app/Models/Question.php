@@ -20,7 +20,10 @@ class Question extends Model
         'correct_answer',
         'explanation',
         'difficulty_level',
-        'subject_id'
+        'subject_id',
+        'exam_id',
+        'exam_bank_id',
+        'category_id'
     ];
 
     // Quan hệ với Subject
@@ -53,5 +56,20 @@ class Question extends Model
     public function answers()
     {
         return $this->hasMany(Answer::class, 'question_id');
+    }
+
+    public function exam()
+    {
+        return $this->belongsTo(Exam::class);
+    }
+
+    public function examBank()
+    {
+        return $this->belongsTo(ExamBank::class);
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
     }
 }

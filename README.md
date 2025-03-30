@@ -302,3 +302,16 @@ Mọi đóng góp để cải thiện dự án đều được chào đón. Vui 
 
 ## License
 Dự án này được phân phối dưới giấy phép MIT. Xem file `LICENSE` để biết thêm chi tiết.
+
+1. Tạo database mới:
+php artisan db:create
+
+2. Chạy lại tất cả các migration:
+php artisan migrate:fresh
+
+3. Chạy seeder để tạo dữ liệu mẫu:
+php artisan db:seed
+
+4. Xóa cache:
+php artisan config:clear
+php artisan cache:clear

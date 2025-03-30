@@ -8,7 +8,13 @@ use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\ExamAttemptController;
 use App\Http\Controllers\LeaderboardController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\ExamCategoryController;
+use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\AdminExamController;
+use App\Http\Controllers\Admin\AdminQuestionController;
+use App\Http\Controllers\Admin\AdminReportController;
+use App\Http\Controllers\Admin\AdminCategoryController;
+use App\Http\Controllers\Admin\AdminExamBankController;
 
 /*
 |--------------------------------------------------------------------------
@@ -54,7 +60,19 @@ Route::middleware(['auth'])->group(function () {
 
     // Routes cho Leaderboard
     Route::resource('leaderboard', LeaderboardController::class)->only(['index', 'show']);
+});
 
-    // Quản lý chủ đề thi
-    Route::resource('exam-categories', ExamCategoryController::class);
+// Routes cho Admin
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+    Route::resource('users', AdminUserController::class);
+    Route::resource('exams', AdminExamController::class);
+    Route::resource('questions', AdminQuestionController::class);
+    Route::resource('categories', AdminCategoryController::class);
+    Route::resource('exam-banks', AdminExamBankController::class);
+    
+    // Routes cho báo cáo
+    Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/exam/{id}', [AdminReportController::class, 'examReport'])->name('reports.exam');
+    Route::get('/reports/user/{id}', [AdminReportController::class, 'userReport'])->name('reports.user');
 });

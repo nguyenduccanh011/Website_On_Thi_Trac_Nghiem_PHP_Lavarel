@@ -1,9 +1,9 @@
-@extends('layouts.app')
+@extends('layouts.admin')
 
 @section('title', 'Dashboard')
 
 @section('content')
-<div class="container">
+<div class="container-fluid">
     <div class="row mb-4">
         <div class="col-md-12">
             <h1>Dashboard</h1>
@@ -12,30 +12,42 @@
     </div>
 
     <div class="row">
-        <div class="col-md-4 mb-4">
-            <div class="card">
+        <div class="col-md-3 mb-4">
+            <div class="card bg-primary text-white">
                 <div class="card-body">
-                    <h5 class="card-title">Bài Thi Đã Làm</h5>
-                    <p class="display-4">{{ Auth::user()->examAttempts()->count() }}</p>
-                    <a href="{{ route('exam-attempts.index') }}" class="btn btn-primary">Xem Chi Tiết</a>
+                    <h5 class="card-title">Tổng Số Người Dùng</h5>
+                    <p class="display-4">{{ $stats['total_users'] }}</p>
+                    <a href="{{ route('admin.users.index') }}" class="btn btn-light">Xem Chi Tiết</a>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-4 mb-4">
-            <div class="card">
+        <div class="col-md-3 mb-4">
+            <div class="card bg-success text-white">
                 <div class="card-body">
-                    <h5 class="card-title">Bài Thi Đạt</h5>
-                    <p class="display-4">{{ Auth::user()->examAttempts()->join('exams', 'exam_attempts.exam_id', '=', 'exams.exam_id')->where('exam_attempts.score', '>=', 'exams.passing_marks')->count() }}</p>
+                    <h5 class="card-title">Tổng Số Đề Thi</h5>
+                    <p class="display-4">{{ $stats['total_exams'] }}</p>
+                    <a href="{{ route('admin.exams.index') }}" class="btn btn-light">Xem Chi Tiết</a>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-4 mb-4">
-            <div class="card">
+        <div class="col-md-3 mb-4">
+            <div class="card bg-info text-white">
                 <div class="card-body">
-                    <h5 class="card-title">Bài Thi Không Đạt</h5>
-                    <p class="display-4">{{ Auth::user()->examAttempts()->join('exams', 'exam_attempts.exam_id', '=', 'exams.exam_id')->where('exam_attempts.score', '<', 'exams.passing_marks')->count() }}</p>
+                    <h5 class="card-title">Tổng Số Câu Hỏi</h5>
+                    <p class="display-4">{{ $stats['total_questions'] }}</p>
+                    <a href="{{ route('admin.questions.index') }}" class="btn btn-light">Xem Chi Tiết</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Tổng Số Lần Thi</h5>
+                    <p class="display-4">{{ $stats['total_attempts'] }}</p>
+                    <a href="{{ route('admin.reports.index') }}" class="btn btn-light">Xem Chi Tiết</a>
                 </div>
             </div>
         </div>
@@ -45,7 +57,7 @@
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="mb-0">Bài Thi Gần Đây</h5>
+                    <h5 class="mb-0">Lần Thi Gần Đây</h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -53,17 +65,19 @@
                             <thead>
                                 <tr>
                                     <th>STT</th>
+                                    <th>Người Dùng</th>
                                     <th>Đề Thi</th>
                                     <th>Độ Khó</th>
                                     <th>Điểm Số</th>
                                     <th>Trạng Thái</th>
-                                    <th>Thao Tác</th>
+                                    <th>Thời Gian</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse(Auth::user()->examAttempts()->latest()->take(5)->get() as $attempt)
+                                @forelse($stats['recent_attempts'] as $attempt)
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
+                                        <td>{{ $attempt->user->name }}</td>
                                         <td>{{ $attempt->exam->exam_name }}</td>
                                         <td>
                                             <span class="badge bg-{{ $attempt->exam->difficulty_level === 'easy' ? 'success' : ($attempt->exam->difficulty_level === 'medium' ? 'warning' : 'danger') }}">
@@ -82,15 +96,11 @@
                                                 <span class="badge bg-danger">Không Đạt</span>
                                             @endif
                                         </td>
-                                        <td>
-                                            <a href="{{ route('exam-attempts.show', $attempt) }}" class="btn btn-info btn-sm">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                        </td>
+                                        <td>{{ $attempt->created_at->format('d/m/Y H:i') }}</td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="text-center">Bạn chưa làm bài thi nào</td>
+                                        <td colspan="7" class="text-center">Chưa có lần thi nào</td>
                                     </tr>
                                 @endforelse
                             </tbody>
