@@ -65,7 +65,7 @@ class Question extends Model
 
     public function examBank()
     {
-        return $this->belongsTo(ExamBank::class);
+        return $this->belongsTo(ExamBank::class, 'exam_bank_id', 'bank_id');
     }
 
     public function category()

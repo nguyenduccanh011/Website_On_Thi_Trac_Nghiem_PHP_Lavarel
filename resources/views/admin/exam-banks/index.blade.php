@@ -35,8 +35,12 @@
                         @forelse($examBanks as $bank)
                             <tr>
                                 <td>{{ $loop->iteration }}</td>
-                                <td>{{ $bank->bank_name }}</td>
-                                <td>{{ $bank->category->category_name }}</td>
+                                <td>{{ $bank->name }}</td>
+                                <td>
+                                    @foreach($bank->categories as $category)
+                                        <span class="badge bg-info me-1">{{ $category->name }}</span>
+                                    @endforeach
+                                </td>
                                 <td>
                                     <span class="badge bg-{{ $bank->difficulty_level === 'easy' ? 'success' : ($bank->difficulty_level === 'medium' ? 'warning' : 'danger') }}">
                                         {{ ucfirst($bank->difficulty_level) }}

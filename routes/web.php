@@ -15,6 +15,8 @@ use App\Http\Controllers\Admin\AdminQuestionController;
 use App\Http\Controllers\Admin\AdminReportController;
 use App\Http\Controllers\Admin\AdminCategoryController;
 use App\Http\Controllers\Admin\AdminExamBankController;
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -63,16 +65,29 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // Routes cho Admin
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
-    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/profile', [AdminProfileController::class, 'edit'])->name('profile');
+    Route::put('/profile', [AdminProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [AdminProfileController::class, 'updatePassword'])->name('profile.password');
+    
+    // User routes
     Route::resource('users', AdminUserController::class);
-    Route::resource('exams', AdminExamController::class);
+    
+    // Question routes
     Route::resource('questions', AdminQuestionController::class);
+    Route::post('/questions', [AdminQuestionController::class, 'store'])->name('questions.store');
+    Route::delete('/questions/{question}', [AdminQuestionController::class, 'destroy'])->name('questions.destroy');
+    
+    // Category routes
     Route::resource('categories', AdminCategoryController::class);
+    
+    // Exam routes
+    Route::resource('exams', AdminExamController::class);
+    
+    // Exam Bank routes
     Route::resource('exam-banks', AdminExamBankController::class);
     
-    // Routes cho báo cáo
+    // Report routes
     Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
-    Route::get('/reports/exam/{id}', [AdminReportController::class, 'examReport'])->name('reports.exam');
-    Route::get('/reports/user/{id}', [AdminReportController::class, 'userReport'])->name('reports.user');
 });

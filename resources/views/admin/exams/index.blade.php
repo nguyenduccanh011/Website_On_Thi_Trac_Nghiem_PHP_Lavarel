@@ -38,8 +38,8 @@
                         @forelse($exams as $exam)
                             <tr>
                                 <td>{{ $loop->iteration }}</td>
-                                <td>{{ $exam->exam_name }}</td>
-                                <td>{{ $exam->category->category_name }}</td>
+                                <td>{{ $exam->title }}</td>
+                                <td>{{ $exam->category->name }}</td>
                                 <td>
                                     <span class="badge bg-{{ $exam->difficulty_level === 'easy' ? 'success' : ($exam->difficulty_level === 'medium' ? 'warning' : 'danger') }}">
                                         {{ ucfirst($exam->difficulty_level) }}

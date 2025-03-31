@@ -9,12 +9,15 @@ return new class extends Migration
     public function up()
     {
         Schema::create('exam_banks', function (Blueprint $table) {
-            $table->id();
-            $table->string('bank_name');
-            $table->foreignId('category_id')->constrained()->onDelete('cascade');
+            $table->id('bank_id');
+            $table->string('name');
+            $table->string('slug')->unique();
+            $table->foreignId('category_id')->constrained('exam_categories', 'category_id')->onDelete('cascade');
             $table->text('description')->nullable();
-            $table->enum('difficulty_level', ['easy', 'medium', 'hard']);
             $table->integer('total_questions')->default(0);
+            $table->enum('difficulty_level', ['easy', 'medium', 'hard'])->default('medium');
+            $table->integer('time_limit')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

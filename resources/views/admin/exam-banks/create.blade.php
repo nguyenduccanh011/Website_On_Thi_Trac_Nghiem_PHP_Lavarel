@@ -33,8 +33,8 @@
                                     id="category_id" name="category_id" required>
                                 <option value="">Chọn Danh Mục</option>
                                 @foreach($categories as $category)
-                                    <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
-                                        {{ $category->category_name }}
+                                    <option value="{{ $category->category_id }}" {{ old('category_id') == $category->category_id ? 'selected' : '' }}>
+                                        {{ $category->name }}
                                     </option>
                                 @endforeach
                             </select>
@@ -76,6 +76,45 @@
                               id="description" name="description" rows="3">{{ old('description') }}</textarea>
                     @error('description')
                         <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Chọn Câu Hỏi</label>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">Chọn</th>
+                                    <th>Câu Hỏi</th>
+                                    <th>Độ Khó</th>
+                                    <th>Đáp Án Đúng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($questions as $question)
+                                    <tr>
+                                        <td>
+                                            <div class="form-check">
+                                                <input class="form-check-input question-checkbox" type="checkbox" 
+                                                       name="questions[]" value="{{ $question->question_id }}"
+                                                       {{ in_array($question->question_id, old('questions', [])) ? 'checked' : '' }}>
+                                            </div>
+                                        </td>
+                                        <td>{{ $question->question_text }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ $question->difficulty_level === 'easy' ? 'success' : ($question->difficulty_level === 'medium' ? 'warning' : 'danger') }}">
+                                                {{ ucfirst($question->difficulty_level) }}
+                                            </span>
+                                        </td>
+                                        <td>{{ $question->correct_answer }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @error('questions')
+                        <div class="text-danger">{{ $message }}</div>
                     @enderror
                 </div>
 

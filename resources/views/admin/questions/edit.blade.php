@@ -25,9 +25,9 @@
                                     id="exam_id" name="exam_id" required>
                                 <option value="">Chọn Đề Thi</option>
                                 @foreach($exams as $exam)
-                                    <option value="{{ $exam->id }}" 
-                                            {{ old('exam_id', $question->exam_id) == $exam->id ? 'selected' : '' }}>
-                                        {{ $exam->exam_name }}
+                                    <option value="{{ $exam->exam_id }}" 
+                                            {{ old('exam_id', $question->exam_id) == $exam->exam_id ? 'selected' : '' }}>
+                                        {{ $exam->title }}
                                     </option>
                                 @endforeach
                             </select>

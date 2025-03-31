@@ -126,20 +126,33 @@ Dự án này là một ứng dụng web được xây dựng bằng PHP và fra
         * `created_at` (`TIMESTAMP`, NULL)
         * `updated_at` (`TIMESTAMP`, NULL)
 
-    * **`categories`:** Lưu trữ thông tin về các danh mục đề thi
-        * `id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
+    * **`exam_categories`:** Lưu trữ thông tin về các danh mục đề thi
+        * `category_id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
         * `name` (`VARCHAR(255)`, NOT NULL)
+        * `slug` (`VARCHAR(255)`, UNIQUE, NOT NULL)
         * `description` (`TEXT`, NULL)
+        * `parent_id` (`INT`, FOREIGN KEY `exam_categories`)
+        * `level` (`INT`, DEFAULT 0)
+        * `is_active` (`BOOLEAN`, DEFAULT true)
         * `created_at` (`TIMESTAMP`, NULL)
         * `updated_at` (`TIMESTAMP`, NULL)
 
     * **`exam_banks`:** Lưu trữ thông tin về các ngân hàng đề thi
-        * `id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
-        * `bank_name` (`VARCHAR(255)`, NOT NULL)
-        * `category_id` (`INT`, FOREIGN KEY `categories`)
+        * `bank_id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
+        * `name` (`VARCHAR(255)`, NOT NULL)
+        * `slug` (`VARCHAR(255)`, UNIQUE, NOT NULL)
         * `description` (`TEXT`, NULL)
-        * `difficulty_level` (`ENUM('easy', 'medium', 'hard')`)
         * `total_questions` (`INT`, DEFAULT 0)
+        * `difficulty_level` (`ENUM('easy', 'medium', 'hard')`, DEFAULT 'medium')
+        * `time_limit` (`INT`, NULL)
+        * `is_active` (`BOOLEAN`, DEFAULT true)
+        * `created_at` (`TIMESTAMP`, NULL)
+        * `updated_at` (`TIMESTAMP`, NULL)
+
+    * **`exam_bank_categories`:** Bảng trung gian để liên kết nhiều-nhiều giữa ngân hàng và danh mục
+        * `id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
+        * `bank_id` (`INT`, FOREIGN KEY `exam_banks`)
+        * `category_id` (`INT`, FOREIGN KEY `exam_categories`)
         * `created_at` (`TIMESTAMP`, NULL)
         * `updated_at` (`TIMESTAMP`, NULL)
 
@@ -153,7 +166,7 @@ Dự án này là một ứng dụng web được xây dựng bằng PHP và fra
     * **`exams`:** Lưu trữ thông tin về các đề thi
         * `id` (`INT`, PRIMARY KEY, AUTO_INCREMENT)
         * `exam_name` (`VARCHAR(255)`, NOT NULL)
-        * `category_id` (`INT`, FOREIGN KEY `categories`)
+        * `category_id` (`INT`, FOREIGN KEY `exam_categories`)
         * `description` (`TEXT`, NULL)
         * `time_limit` (`INT`, NULL)
         * `total_marks` (`INT`, NULL)
@@ -329,3 +342,7 @@ php artisan db:seed
 4. Xóa cache:
 php artisan config:clear
 php artisan cache:clear
+
+// Xóa các event listener cũ nếu có
+const newBtn = addNewQuestionBtn.cloneNode(true);
+addNewQuestionBtn.parentNode.replaceChild(newBtn, addNewQuestionBtn);

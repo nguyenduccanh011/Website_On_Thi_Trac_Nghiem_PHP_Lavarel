@@ -25,7 +25,7 @@
                         <tr>
                             <th>STT</th>
                             <th>Câu Hỏi</th>
-                            <th>Đề Thi</th>
+                            <th>Ngân Hàng</th>
                             <th>Điểm</th>
                             <th>Đáp Án</th>
                             <th>Thao Tác</th>
@@ -36,7 +36,7 @@
                             <tr>
                                 <td>{{ $loop->iteration }}</td>
                                 <td>{{ Str::limit($question->question_text, 50) }}</td>
-                                <td>{{ $question->exam->exam_name }}</td>
+                                <td>{{ $question->examBank ? $question->examBank->name : 'Chưa phân loại' }}</td>
                                 <td>{{ $question->marks }}</td>
                                 <td>{{ $question->correct_answer }}</td>
                                 <td>

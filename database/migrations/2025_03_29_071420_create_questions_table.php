@@ -10,14 +10,14 @@ return new class extends Migration
     {
         Schema::create('questions', function (Blueprint $table) {
             $table->id('question_id');
-            $table->foreignId('exam_id')->references('exam_id')->on('exams')->onDelete('cascade');
+            $table->foreignId('exam_id')->nullable()->references('exam_id')->on('exams')->onDelete('cascade');
             $table->text('question_text');
             $table->text('option_a');
             $table->text('option_b');
             $table->text('option_c');
             $table->text('option_d');
             $table->enum('correct_answer', ['A', 'B', 'C', 'D']);
-            $table->integer('marks');
+            $table->integer('marks')->default(1);
             $table->timestamps();
         });
     }

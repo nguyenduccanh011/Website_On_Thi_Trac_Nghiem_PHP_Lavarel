@@ -11,18 +11,21 @@
         </a>
     </div>
 
-    <div class="card">
-        <div class="card-body">
-            <form action="{{ route('admin.exams.store') }}" method="POST">
-                @csrf
-                
+    <form action="{{ route('admin.exams.store') }}" method="POST" id="examForm">
+        @csrf
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Thông Tin Đề Thi</h5>
+            </div>
+            <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label for="exam_name" class="form-label">Tên Đề Thi</label>
-                            <input type="text" class="form-control @error('exam_name') is-invalid @enderror" 
-                                   id="exam_name" name="exam_name" value="{{ old('exam_name') }}" required>
-                            @error('exam_name')
+                            <label for="title" class="form-label">Tên Đề Thi</label>
+                            <input type="text" class="form-control @error('title') is-invalid @enderror" 
+                                   id="title" name="title" value="{{ old('title') }}" required>
+                            @error('title')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
@@ -33,8 +36,8 @@
                                     id="category_id" name="category_id" required>
                                 <option value="">Chọn Danh Mục</option>
                                 @foreach($categories as $category)
-                                    <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
-                                        {{ $category->category_name }}
+                                    <option value="{{ $category->category_id }}" {{ old('category_id') == $category->category_id ? 'selected' : '' }}>
+                                        {{ $category->name }}
                                     </option>
                                 @endforeach
                             </select>
@@ -60,18 +63,18 @@
 
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label for="duration" class="form-label">Thời Gian (phút)</label>
+                            <label for="duration" class="form-label">Thời gian làm bài (phút)</label>
                             <input type="number" class="form-control @error('duration') is-invalid @enderror" 
-                                   id="duration" name="duration" value="{{ old('duration') }}" required>
+                                   id="duration" name="duration" value="{{ old('duration') }}" min="1" required>
                             @error('duration')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
                         <div class="mb-3">
-                            <label for="total_marks" class="form-label">Điểm Tối Đa</label>
+                            <label for="total_marks" class="form-label">Tổng điểm</label>
                             <input type="number" class="form-control @error('total_marks') is-invalid @enderror" 
-                                   id="total_marks" name="total_marks" value="{{ old('total_marks') }}" required>
+                                id="total_marks" name="total_marks" value="{{ old('total_marks') }}" min="1" required>
                             @error('total_marks')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -107,14 +110,257 @@
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
-
-                <div class="text-end">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Lưu Đề Thi
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
-    </div>
+
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Câu Hỏi Mới</h5>
+                <button type="button" class="btn btn-success" id="addNewQuestion">
+                    <i class="fas fa-plus"></i> Thêm Dòng Câu Hỏi
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="newQuestionsTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px">STT</th>
+                                <th>Nội Dung Câu Hỏi</th>
+                                <th>Lựa Chọn A</th>
+                                <th>Lựa Chọn B</th>
+                                <th>Lựa Chọn C</th>
+                                <th>Lựa Chọn D</th>
+                                <th>Đáp Án</th>
+                                <th>Độ Khó</th>
+                                <th>Giải Thích</th>
+                                <th style="width: 50px">Xóa</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dòng trống mặc định sẽ được thêm bằng JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Câu Hỏi Đã Có</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px">
+                                    <input type="checkbox" id="select-all">
+                                </th>
+                                <th>Nội Dung Câu Hỏi</th>
+                                <th>Độ Khó</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($questions as $question)
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" name="existing_questions[]" value="{{ $question->question_id }}"
+                                               {{ in_array($question->question_id, old('existing_questions', [])) ? 'checked' : '' }}>
+                                    </td>
+                                    <td>{{ $question->question_text }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ $question->difficulty_level === 'easy' ? 'success' : ($question->difficulty_level === 'medium' ? 'warning' : 'danger') }}">
+                                            {{ ucfirst($question->difficulty_level) }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @error('existing_questions')
+                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                @enderror
+            </div>
+        </div>
+
+        <div class="text-end mb-4">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Lưu Đề Thi
+            </button>
+        </div>
+    </form>
 </div>
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Xử lý nút thêm dòng câu hỏi mới
+        const addNewQuestionBtn = document.getElementById('addNewQuestion');
+        if (addNewQuestionBtn) {
+            // Xóa các event listener cũ nếu có
+            const newBtn = addNewQuestionBtn.cloneNode(true);
+            addNewQuestionBtn.parentNode.replaceChild(newBtn, addNewQuestionBtn);
+            
+            newBtn.addEventListener('click', function() {
+                addEmptyRow();
+            });
+        }
+
+        // Hàm thêm dòng trống
+        function addEmptyRow() {
+            const tbody = document.querySelector('#newQuestionsTable tbody');
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td>${tbody.children.length + 1}</td>
+                <td><textarea class="form-control" name="new_questions[${tbody.children.length}][question_text]" rows="2" required></textarea></td>
+                <td><input type="text" class="form-control" name="new_questions[${tbody.children.length}][option_a]" required></td>
+                <td><input type="text" class="form-control" name="new_questions[${tbody.children.length}][option_b]" required></td>
+                <td><input type="text" class="form-control" name="new_questions[${tbody.children.length}][option_c]" required></td>
+                <td><input type="text" class="form-control" name="new_questions[${tbody.children.length}][option_d]" required></td>
+                <td>
+                    <select class="form-select" name="new_questions[${tbody.children.length}][correct_answer]" required>
+                        <option value="">Chọn</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                    </select>
+                </td>
+                <td>
+                    <select class="form-select" name="new_questions[${tbody.children.length}][difficulty_level]" required>
+                        <option value="">Chọn</option>
+                        <option value="easy">Dễ</option>
+                        <option value="medium">Trung Bình</option>
+                        <option value="hard">Khó</option>
+                    </select>
+                </td>
+                <td><textarea class="form-control" name="new_questions[${tbody.children.length}][explanation]" rows="2"></textarea></td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm delete-row">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(newRow);
+        }
+
+        // Xử lý nút xóa dòng
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.delete-row')) {
+                if (confirm('Bạn có chắc chắn muốn xóa dòng này?')) {
+                    e.target.closest('tr').remove();
+                    updateRowNumbers();
+                }
+            }
+        });
+
+        // Xử lý checkbox chọn tất cả
+        const selectAllCheckbox = document.getElementById('select-all');
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                const checkboxes = document.getElementsByName('existing_questions[]');
+                for (let checkbox of checkboxes) {
+                    checkbox.checked = this.checked;
+                    if (this.checked) {
+                        addSelectedQuestionToForm(checkbox.value);
+                    } else {
+                        removeQuestionFromForm(checkbox.value);
+                    }
+                }
+            });
+        }
+
+        // Xử lý khi chọn/bỏ chọn từng câu hỏi
+        document.querySelectorAll('input[name="existing_questions[]"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                if (this.checked) {
+                    addSelectedQuestionToForm(this.value);
+                } else {
+                    removeQuestionFromForm(this.value);
+                }
+            });
+        });
+
+        // Hàm thêm câu hỏi đã chọn vào form
+        function addSelectedQuestionToForm(questionId) {
+            const questionRow = document.querySelector(`tr[data-question-id="${questionId}"]`);
+            if (!questionRow) {
+                const questions = @json($questions);
+                const selectedQuestion = questions.find(q => q.question_id == questionId);
+                if (selectedQuestion) {
+                    const tbody = document.querySelector('#newQuestionsTable tbody');
+                    const newRow = document.createElement('tr');
+                    newRow.setAttribute('data-question-id', questionId);
+                    newRow.innerHTML = `
+                        <td>${tbody.children.length + 1}</td>
+                        <td><textarea class="form-control" name="new_questions[${tbody.children.length}][question_text]" rows="2" required>${selectedQuestion.question_text}</textarea></td>
+                        <td><input type="text" class="form-control" name="new_questions[${tbody.children.length}][option_a]" value="${selectedQuestion.option_a}" required></td>
+                        <td><input type="text" class="form-control" name="new_questions[${tbody.children.length}][option_b]" value="${selectedQuestion.option_b}" required></td>
+                        <td><input type="text" class="form-control" name="new_questions[${tbody.children.length}][option_c]" value="${selectedQuestion.option_c}" required></td>
+                        <td><input type="text" class="form-control" name="new_questions[${tbody.children.length}][option_d]" value="${selectedQuestion.option_d}" required></td>
+                        <td>
+                            <select class="form-select" name="new_questions[${tbody.children.length}][correct_answer]" required>
+                                <option value="">Chọn</option>
+                                <option value="A" ${selectedQuestion.correct_answer === 'A' ? 'selected' : ''}>A</option>
+                                <option value="B" ${selectedQuestion.correct_answer === 'B' ? 'selected' : ''}>B</option>
+                                <option value="C" ${selectedQuestion.correct_answer === 'C' ? 'selected' : ''}>C</option>
+                                <option value="D" ${selectedQuestion.correct_answer === 'D' ? 'selected' : ''}>D</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="form-select" name="new_questions[${tbody.children.length}][difficulty_level]" required>
+                                <option value="">Chọn</option>
+                                <option value="easy" ${selectedQuestion.difficulty_level === 'easy' ? 'selected' : ''}>Dễ</option>
+                                <option value="medium" ${selectedQuestion.difficulty_level === 'medium' ? 'selected' : ''}>Trung Bình</option>
+                                <option value="hard" ${selectedQuestion.difficulty_level === 'hard' ? 'selected' : ''}>Khó</option>
+                            </select>
+                        </td>
+                        <td><textarea class="form-control" name="new_questions[${tbody.children.length}][explanation]" rows="2">${selectedQuestion.explanation || ''}</textarea></td>
+                        <td>
+                            <button type="button" class="btn btn-danger btn-sm delete-row">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(newRow);
+                }
+            }
+        }
+
+        // Hàm cập nhật lại số thứ tự các dòng
+        function updateRowNumbers() {
+            const rows = document.querySelectorAll('#newQuestionsTable tbody tr');
+            rows.forEach((row, index) => {
+                row.cells[0].textContent = index + 1;
+            });
+        }
+
+        // Hàm xóa câu hỏi khỏi form
+        function removeQuestionFromForm(questionId) {
+            const questionRow = document.querySelector(`tr[data-question-id="${questionId}"]`);
+            if (questionRow) {
+                questionRow.remove();
+                updateRowNumbers();
+            }
+        }
+
+        // Xử lý form submit
+        const examForm = document.getElementById('examForm');
+        if (examForm) {
+            examForm.addEventListener('submit', function(e) {
+                const newQuestions = document.querySelectorAll('#newQuestionsTable tbody tr');
+                const existingQuestions = document.querySelectorAll('input[name="existing_questions[]"]:checked');
+                
+                if (newQuestions.length === 0 && existingQuestions.length === 0) {
+                    e.preventDefault();
+                    alert('Vui lòng thêm ít nhất một câu hỏi mới hoặc chọn câu hỏi đã có.');
+                    return;
+                }
+            });
+        }
+    });
+</script>
+@endpush
 @endsection 
