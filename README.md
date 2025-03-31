@@ -342,7 +342,3 @@ php artisan db:seed
 4. Xóa cache:
 php artisan config:clear
 php artisan cache:clear
-
-// Xóa các event listener cũ nếu có
-const newBtn = addNewQuestionBtn.cloneNode(true);
-addNewQuestionBtn.parentNode.replaceChild(newBtn, addNewQuestionBtn);
