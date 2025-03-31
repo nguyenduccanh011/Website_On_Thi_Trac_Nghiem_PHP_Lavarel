@@ -11,7 +11,7 @@ class ExamCategory extends Model
 {
     use HasFactory;
 
-    protected $table = 'exam_categories';
+    protected $table = 'categories';
     protected $primaryKey = 'category_id';
 
     protected $fillable = [

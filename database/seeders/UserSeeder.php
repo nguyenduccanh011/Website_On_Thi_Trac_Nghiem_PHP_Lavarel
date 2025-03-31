@@ -5,41 +5,45 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
 
 class UserSeeder extends Seeder
 {
     public function run()
     {
-        $users = [
+        $now = Carbon::now();
+        
+        DB::table('users')->insertOrIgnore([
             [
-                'username' => 'admin',
+                'name' => 'Admin',
                 'email' => 'admin@example.com',
-                'email_verified_at' => now(),
                 'password' => Hash::make('password'),
                 'role' => 'admin',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'status' => 'active',
+                'email_verified_at' => $now,
+                'created_at' => $now,
+                'updated_at' => $now,
             ],
             [
-                'username' => 'user',
+                'name' => 'User',
                 'email' => 'user@example.com',
-                'email_verified_at' => now(),
                 'password' => Hash::make('password'),
                 'role' => 'user',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'status' => 'active',
+                'email_verified_at' => $now,
+                'created_at' => $now,
+                'updated_at' => $now,
             ],
             [
-                'username' => 'teacher',
+                'name' => 'Teacher',
                 'email' => 'teacher@example.com',
-                'email_verified_at' => now(),
                 'password' => Hash::make('password'),
                 'role' => 'teacher',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'status' => 'active',
+                'email_verified_at' => $now,
+                'created_at' => $now,
+                'updated_at' => $now,
             ],
-        ];
-
-        DB::table('users')->insertOrIgnore($users);
+        ]);
     }
 } 

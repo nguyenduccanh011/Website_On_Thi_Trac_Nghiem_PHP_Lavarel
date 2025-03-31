@@ -15,9 +15,14 @@ return new class extends Migration
     {
         Schema::create('forum_topics', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->references('user_id')->on('users')->onDelete('cascade');
             $table->string('title');
             $table->text('content');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->integer('views')->default(0);
+            $table->integer('replies')->default(0);
+            $table->boolean('is_locked')->default(false);
+            $table->boolean('is_pinned')->default(false);
+            $table->timestamp('last_reply_at')->nullable();
             $table->timestamps();
         });
     }

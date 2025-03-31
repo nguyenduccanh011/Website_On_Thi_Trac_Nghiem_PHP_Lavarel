@@ -9,15 +9,17 @@ return new class extends Migration
     public function up()
     {
         Schema::create('questions', function (Blueprint $table) {
-            $table->id('question_id');
-            $table->foreignId('exam_id')->nullable()->references('exam_id')->on('exams')->onDelete('cascade');
+            $table->id();
             $table->text('question_text');
-            $table->text('option_a');
-            $table->text('option_b');
-            $table->text('option_c');
-            $table->text('option_d');
+            $table->string('option_a');
+            $table->string('option_b');
+            $table->string('option_c');
+            $table->string('option_d');
             $table->enum('correct_answer', ['A', 'B', 'C', 'D']);
-            $table->integer('marks')->default(1);
+            $table->text('explanation')->nullable();
+            $table->enum('difficulty_level', ['easy', 'medium', 'hard'])->default('medium');
+            $table->foreignId('exam_id')->nullable()->constrained('exams')->onDelete('set null');
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

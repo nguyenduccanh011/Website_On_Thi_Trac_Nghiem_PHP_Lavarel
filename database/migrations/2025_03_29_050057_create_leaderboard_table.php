@@ -15,11 +15,11 @@ return new class extends Migration
     {
         Schema::create('leaderboard', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->references('user_id')->on('users')->onDelete('cascade');
-            $table->foreignId('exam_id')->references('exam_id')->on('exams')->onDelete('cascade');
-            $table->integer('score');
-            $table->integer('rank');
-            $table->timestamp('last_attempt_date');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->integer('total_score')->default(0);
+            $table->integer('exams_taken')->default(0);
+            $table->integer('average_score')->default(0);
+            $table->integer('rank')->default(0);
             $table->timestamps();
         });
     }

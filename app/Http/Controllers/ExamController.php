@@ -48,7 +48,7 @@ class ExamController extends Controller
             'medium_question_count' => 'required|integer|min:0',
             'hard_question_count' => 'required|integer|min:0',
             'description' => 'nullable|string',
-            'category_id' => 'required|exists:exam_categories,category_id'
+            'category_id' => 'required|exists:categories,category_id'
         ]);
 
         $exam = Exam::create($validated);
@@ -100,7 +100,7 @@ class ExamController extends Controller
             'medium_question_count' => 'required|integer|min:0',
             'hard_question_count' => 'required|integer|min:0',
             'description' => 'nullable|string',
-            'category_id' => 'required|exists:exam_categories,category_id'
+            'category_id' => 'required|exists:categories,category_id'
         ]);
 
         $exam->update($validated);

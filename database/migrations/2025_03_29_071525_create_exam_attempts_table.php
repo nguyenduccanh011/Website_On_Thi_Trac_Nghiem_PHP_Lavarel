@@ -10,15 +10,15 @@ return new class extends Migration
     {
         Schema::create('exam_attempts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->references('user_id')->on('users')->onDelete('cascade');
-            $table->foreignId('exam_id')->references('exam_id')->on('exams')->onDelete('cascade');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('exam_id')->constrained('exams')->onDelete('cascade');
             $table->timestamp('start_time');
             $table->timestamp('end_time')->nullable();
             $table->integer('score')->nullable();
             $table->integer('total_questions')->default(0);
             $table->integer('correct_answers')->default(0);
             $table->integer('incorrect_answers')->default(0);
-            $table->enum('status', ['pending', 'completed', 'failed'])->default('pending');
+            $table->string('status')->default('in_progress');
             $table->timestamps();
         });
     }

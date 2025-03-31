@@ -66,28 +66,26 @@ Route::middleware(['auth'])->group(function () {
 
 // Routes cho Admin
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     Route::get('/profile', [AdminProfileController::class, 'edit'])->name('profile');
     Route::put('/profile', [AdminProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [AdminProfileController::class, 'updatePassword'])->name('profile.password');
     
-    // User routes
+    // Quản lý người dùng
     Route::resource('users', AdminUserController::class);
     
-    // Question routes
-    Route::resource('questions', AdminQuestionController::class);
-    Route::post('/questions', [AdminQuestionController::class, 'store'])->name('questions.store');
-    Route::delete('/questions/{question}', [AdminQuestionController::class, 'destroy'])->name('questions.destroy');
-    
-    // Category routes
+    // Quản lý danh mục
     Route::resource('categories', AdminCategoryController::class);
     
-    // Exam routes
-    Route::resource('exams', AdminExamController::class);
-    
-    // Exam Bank routes
+    // Quản lý ngân hàng câu hỏi
     Route::resource('exam-banks', AdminExamBankController::class);
     
-    // Report routes
+    // Quản lý câu hỏi
+    Route::resource('questions', AdminQuestionController::class);
+    
+    // Quản lý đề thi
+    Route::resource('exams', AdminExamController::class);
+    
+    // Quản lý báo cáo
     Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
 });

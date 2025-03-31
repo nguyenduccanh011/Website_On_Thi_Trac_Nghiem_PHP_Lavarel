@@ -12,11 +12,11 @@ return new class extends Migration
             $table->id('bank_id');
             $table->string('name');
             $table->string('slug')->unique();
-            $table->foreignId('category_id')->constrained('exam_categories', 'category_id')->onDelete('cascade');
             $table->text('description')->nullable();
-            $table->integer('total_questions')->default(0);
+            $table->foreignId('category_id')->references('category_id')->on('categories')->onDelete('cascade');
             $table->enum('difficulty_level', ['easy', 'medium', 'hard'])->default('medium');
-            $table->integer('time_limit')->nullable();
+            $table->integer('time_limit')->default(60);
+            $table->integer('total_questions')->default(0);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

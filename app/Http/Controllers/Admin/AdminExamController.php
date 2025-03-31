@@ -28,7 +28,7 @@ class AdminExamController extends Controller
         try {
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
-                'category_id' => 'required|exists:exam_categories,category_id',
+                'category_id' => 'required|exists:categories,category_id',
                 'description' => 'nullable|string',
                 'duration' => 'required|integer|min:1',
                 'total_marks' => 'required|integer|min:1',
@@ -114,7 +114,7 @@ class AdminExamController extends Controller
             'total_marks' => 'required|integer|min:1',
             'passing_marks' => 'required|integer|min:1',
             'difficulty_level' => 'required|in:easy,medium,hard',
-            'category_id' => 'required|exists:exam_categories,category_id',
+            'category_id' => 'required|exists:categories,category_id',
             'is_active' => 'boolean'
         ]);
 

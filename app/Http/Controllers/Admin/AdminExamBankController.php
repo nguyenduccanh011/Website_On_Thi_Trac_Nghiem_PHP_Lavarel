@@ -29,7 +29,7 @@ class AdminExamBankController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category_ids' => 'required|array',
-            'category_ids.*' => 'exists:exam_categories,category_id',
+            'category_ids.*' => 'exists:categories,category_id',
             'description' => 'nullable|string',
             'difficulty_level' => 'required|in:easy,medium,hard',
             'total_questions' => 'required|integer|min:1',
@@ -69,7 +69,7 @@ class AdminExamBankController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category_ids' => 'required|array',
-            'category_ids.*' => 'exists:exam_categories,category_id',
+            'category_ids.*' => 'exists:categories,category_id',
             'description' => 'nullable|string',
             'difficulty_level' => 'required|in:easy,medium,hard',
             'total_questions' => 'required|integer|min:1',

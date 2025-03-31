@@ -52,6 +52,6 @@ class ExamCategorySeeder extends Seeder
             ],
         ];
 
-        DB::table('exam_categories')->insert($categories);
+        DB::table('categories')->insert($categories);
     }
 } 
