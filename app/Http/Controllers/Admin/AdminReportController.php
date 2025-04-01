@@ -19,20 +19,40 @@ class AdminReportController extends Controller
         $totalAttempts = ExamAttempt::count();
         
         // Thống kê bài thi
-        $examStats = Exam::select('exams.*')
-            ->selectRaw('COUNT(exam_attempts.id) as total_attempts')
-            ->selectRaw('AVG(exam_attempts.score) as average_score')
-            ->leftJoin('exam_attempts', 'exams.id', '=', 'exam_attempts.exam_id')
-            ->groupBy('exams.id')
-            ->get();
+        $examStats = Exam::select([
+            'exams.id',
+            'exams.title',
+            'exams.description',
+            'exams.duration',
+            'exams.total_marks',
+            'exams.passing_marks',
+            'exams.is_active',
+            DB::raw('COUNT(exam_attempts.id) as total_attempts'),
+            DB::raw('AVG(exam_attempts.score) as average_score')
+        ])
+        ->leftJoin('exam_attempts', 'exams.id', '=', 'exam_attempts.exam_id')
+        ->groupBy(
+            'exams.id',
+            'exams.title',
+            'exams.description',
+            'exams.duration',
+            'exams.total_marks',
+            'exams.passing_marks',
+            'exams.is_active'
+        )
+        ->get();
 
         // Thống kê người dùng
-        $userStats = User::select('users.*')
-            ->selectRaw('COUNT(exam_attempts.id) as total_attempts')
-            ->selectRaw('AVG(exam_attempts.score) as average_score')
-            ->leftJoin('exam_attempts', 'users.id', '=', 'exam_attempts.user_id')
-            ->groupBy('users.id')
-            ->get();
+        $userStats = User::select([
+            'users.id',
+            'users.name',
+            'users.email',
+            DB::raw('COUNT(exam_attempts.id) as total_attempts'),
+            DB::raw('AVG(exam_attempts.score) as average_score')
+        ])
+        ->leftJoin('exam_attempts', 'users.id', '=', 'exam_attempts.user_id')
+        ->groupBy('users.id', 'users.name', 'users.email')
+        ->get();
 
         // Thống kê theo thời gian
         $attemptsByDate = ExamAttempt::select(

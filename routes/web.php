@@ -88,4 +88,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     
     // Quản lý báo cáo
     Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/exam/{id}', [AdminReportController::class, 'examReport'])->name('reports.exam');
+    Route::get('/reports/user/{id}', [AdminReportController::class, 'userReport'])->name('reports.user');
 });

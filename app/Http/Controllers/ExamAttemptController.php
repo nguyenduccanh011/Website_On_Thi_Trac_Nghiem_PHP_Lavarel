@@ -34,7 +34,7 @@ class ExamAttemptController extends Controller
     {
         // Kiểm tra xem người dùng đã làm bài thi này chưa
         $existingAttempt = ExamAttempt::where('user_id', Auth::id())
-            ->where('exam_id', $exam->exam_id)
+            ->where('exam_id', $exam->id)
             ->first();
 
         if ($existingAttempt) {
@@ -45,7 +45,7 @@ class ExamAttemptController extends Controller
         // Tạo lần làm bài mới
         $attempt = ExamAttempt::create([
             'user_id' => Auth::id(),
-            'exam_id' => $exam->exam_id,
+            'exam_id' => $exam->id,
             'start_time' => now(),
             'total_questions' => $exam->questions()->count()
         ]);

@@ -26,7 +26,7 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Bài Thi Đạt</h5>
-                    <p class="display-4">{{ Auth::user()->examAttempts()->join('exams', 'exam_attempts.exam_id', '=', 'exams.exam_id')->where('exam_attempts.score', '>=', 'exams.passing_marks')->count() }}</p>
+                    <p class="display-4">{{ Auth::user()->examAttempts()->join('exams', 'exam_attempts.exam_id', '=', 'exams.id')->where('exam_attempts.score', '>=', 'exams.passing_marks')->count() }}</p>
                 </div>
             </div>
         </div>
@@ -35,7 +35,7 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Bài Thi Không Đạt</h5>
-                    <p class="display-4">{{ Auth::user()->examAttempts()->join('exams', 'exam_attempts.exam_id', '=', 'exams.exam_id')->where('exam_attempts.score', '<', 'exams.passing_marks')->count() }}</p>
+                    <p class="display-4">{{ Auth::user()->examAttempts()->join('exams', 'exam_attempts.exam_id', '=', 'exams.id')->where('exam_attempts.score', '<', 'exams.passing_marks')->count() }}</p>
                 </div>
             </div>
         </div>

@@ -102,10 +102,10 @@
                             <tbody>
                                 @foreach($recentExams as $exam)
                                 <tr>
-                                    <td>{{ $exam->name }}</td>
+                                    <td>{{ $exam->title }}</td>
                                     <td>{{ $exam->created_at->format('d/m/Y') }}</td>
                                     <td>
-                                        <a href="{{ route('admin.exams.edit', $exam->exam_id) }}" class="btn btn-sm btn-primary">
+                                        <a href="{{ route('admin.exams.edit', $exam->id) }}" class="btn btn-sm btn-primary">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                     </td>

@@ -195,6 +195,9 @@
 
 @push('scripts')
 <script>
+    // Lưu trữ dữ liệu câu hỏi từ PHP
+    const questionsData = @json($questions);
+
     document.addEventListener('DOMContentLoaded', function() {
         // Xử lý nút thêm dòng câu hỏi mới
         const addNewQuestionBtn = document.getElementById('addNewQuestion');
@@ -208,72 +211,25 @@
             });
         }
 
-        // Hàm thêm dòng trống
-        function addEmptyRow() {
-            const tbody = document.querySelector('#newQuestionsTable tbody');
-            const newRow = document.createElement('tr');
-            newRow.innerHTML = `
-                <td>${tbody.children.length + 1}</td>
-                <td><textarea class="form-control" name="new_questions[${tbody.children.length}][question_text]" rows="2" required></textarea></td>
-                <td><input type="text" class="form-control" name="new_questions[${tbody.children.length}][option_a]" required></td>
-                <td><input type="text" class="form-control" name="new_questions[${tbody.children.length}][option_b]" required></td>
-                <td><input type="text" class="form-control" name="new_questions[${tbody.children.length}][option_c]" required></td>
-                <td><input type="text" class="form-control" name="new_questions[${tbody.children.length}][option_d]" required></td>
-                <td>
-                    <select class="form-select" name="new_questions[${tbody.children.length}][correct_answer]" required>
-                        <option value="">Chọn</option>
-                        <option value="A">A</option>
-                        <option value="B">B</option>
-                        <option value="C">C</option>
-                        <option value="D">D</option>
-                    </select>
-                </td>
-                <td>
-                    <select class="form-select" name="new_questions[${tbody.children.length}][difficulty_level]" required>
-                        <option value="">Chọn</option>
-                        <option value="easy">Dễ</option>
-                        <option value="medium">Trung Bình</option>
-                        <option value="hard">Khó</option>
-                    </select>
-                </td>
-                <td><textarea class="form-control" name="new_questions[${tbody.children.length}][explanation]" rows="2"></textarea></td>
-                <td>
-                    <button type="button" class="btn btn-danger btn-sm delete-row">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            `;
-            tbody.appendChild(newRow);
-        }
-
-        // Xử lý nút xóa dòng
-        document.addEventListener('click', function(e) {
-            if (e.target.closest('.delete-row')) {
-                if (confirm('Bạn có chắc chắn muốn xóa dòng này?')) {
-                    e.target.closest('tr').remove();
-                    updateRowNumbers();
-                }
-            }
-        });
-
         // Xử lý checkbox chọn tất cả
         const selectAllCheckbox = document.getElementById('select-all');
         if (selectAllCheckbox) {
             selectAllCheckbox.addEventListener('change', function() {
-                const checkboxes = document.getElementsByName('existing_questions[]');
-                for (let checkbox of checkboxes) {
+                const checkboxes = document.querySelectorAll('input[name="existing_questions[]"]');
+                checkboxes.forEach(checkbox => {
                     checkbox.checked = this.checked;
                     if (this.checked) {
                         addSelectedQuestionToForm(checkbox.value);
                     } else {
                         removeQuestionFromForm(checkbox.value);
                     }
-                }
+                });
             });
         }
 
-        // Xử lý khi chọn/bỏ chọn từng câu hỏi
-        document.querySelectorAll('input[name="existing_questions[]"]').forEach(checkbox => {
+        // Xử lý checkbox chọn từng câu hỏi
+        const questionCheckboxes = document.querySelectorAll('input[name="existing_questions[]"]');
+        questionCheckboxes.forEach(checkbox => {
             checkbox.addEventListener('change', function() {
                 if (this.checked) {
                     addSelectedQuestionToForm(this.value);
@@ -282,85 +238,118 @@
                 }
             });
         });
-
-        // Hàm thêm câu hỏi đã chọn vào form
-        function addSelectedQuestionToForm(questionId) {
-            const questionRow = document.querySelector(`tr[data-question-id="${questionId}"]`);
-            if (!questionRow) {
-                const questions = @json($questions);
-                const selectedQuestion = questions.find(q => q.question_id == questionId);
-                if (selectedQuestion) {
-                    const tbody = document.querySelector('#newQuestionsTable tbody');
-                    const newRow = document.createElement('tr');
-                    newRow.setAttribute('data-question-id', questionId);
-                    newRow.innerHTML = `
-                        <td>${tbody.children.length + 1}</td>
-                        <td><textarea class="form-control" name="new_questions[${tbody.children.length}][question_text]" rows="2" required>${selectedQuestion.question_text}</textarea></td>
-                        <td><input type="text" class="form-control" name="new_questions[${tbody.children.length}][option_a]" value="${selectedQuestion.option_a}" required></td>
-                        <td><input type="text" class="form-control" name="new_questions[${tbody.children.length}][option_b]" value="${selectedQuestion.option_b}" required></td>
-                        <td><input type="text" class="form-control" name="new_questions[${tbody.children.length}][option_c]" value="${selectedQuestion.option_c}" required></td>
-                        <td><input type="text" class="form-control" name="new_questions[${tbody.children.length}][option_d]" value="${selectedQuestion.option_d}" required></td>
-                        <td>
-                            <select class="form-select" name="new_questions[${tbody.children.length}][correct_answer]" required>
-                                <option value="">Chọn</option>
-                                <option value="A" ${selectedQuestion.correct_answer === 'A' ? 'selected' : ''}>A</option>
-                                <option value="B" ${selectedQuestion.correct_answer === 'B' ? 'selected' : ''}>B</option>
-                                <option value="C" ${selectedQuestion.correct_answer === 'C' ? 'selected' : ''}>C</option>
-                                <option value="D" ${selectedQuestion.correct_answer === 'D' ? 'selected' : ''}>D</option>
-                            </select>
-                        </td>
-                        <td>
-                            <select class="form-select" name="new_questions[${tbody.children.length}][difficulty_level]" required>
-                                <option value="">Chọn</option>
-                                <option value="easy" ${selectedQuestion.difficulty_level === 'easy' ? 'selected' : ''}>Dễ</option>
-                                <option value="medium" ${selectedQuestion.difficulty_level === 'medium' ? 'selected' : ''}>Trung Bình</option>
-                                <option value="hard" ${selectedQuestion.difficulty_level === 'hard' ? 'selected' : ''}>Khó</option>
-                            </select>
-                        </td>
-                        <td><textarea class="form-control" name="new_questions[${tbody.children.length}][explanation]" rows="2">${selectedQuestion.explanation || ''}</textarea></td>
-                        <td>
-                            <button type="button" class="btn btn-danger btn-sm delete-row">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    `;
-                    tbody.appendChild(newRow);
-                }
-            }
-        }
-
-        // Hàm cập nhật lại số thứ tự các dòng
-        function updateRowNumbers() {
-            const rows = document.querySelectorAll('#newQuestionsTable tbody tr');
-            rows.forEach((row, index) => {
-                row.cells[0].textContent = index + 1;
-            });
-        }
-
-        // Hàm xóa câu hỏi khỏi form
-        function removeQuestionFromForm(questionId) {
-            const questionRow = document.querySelector(`tr[data-question-id="${questionId}"]`);
-            if (questionRow) {
-                questionRow.remove();
-                updateRowNumbers();
-            }
-        }
-
-        // Xử lý form submit
-        const examForm = document.getElementById('examForm');
-        if (examForm) {
-            examForm.addEventListener('submit', function(e) {
-                const newQuestions = document.querySelectorAll('#newQuestionsTable tbody tr');
-                const existingQuestions = document.querySelectorAll('input[name="existing_questions[]"]:checked');
-                
-                if (newQuestions.length === 0 && existingQuestions.length === 0) {
-                    e.preventDefault();
-                    alert('Vui lòng thêm ít nhất một câu hỏi mới hoặc chọn câu hỏi đã có.');
-                    return;
-                }
-            });
-        }
     });
+
+    let questionCount = 0;
+
+    function addEmptyRow() {
+        const tbody = document.querySelector('#newQuestionsTable tbody');
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+            <td>${tbody.children.length + 1}</td>
+            <td><textarea class="form-control" name="new_questions[${questionCount}][question_text]" rows="2" required></textarea></td>
+            <td><input type="text" class="form-control" name="new_questions[${questionCount}][option_a]" required></td>
+            <td><input type="text" class="form-control" name="new_questions[${questionCount}][option_b]" required></td>
+            <td><input type="text" class="form-control" name="new_questions[${questionCount}][option_c]" required></td>
+            <td><input type="text" class="form-control" name="new_questions[${questionCount}][option_d]" required></td>
+            <td>
+                <select class="form-select" name="new_questions[${questionCount}][correct_answer]" required>
+                    <option value="">Chọn</option>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                </select>
+            </td>
+            <td>
+                <select class="form-select" name="new_questions[${questionCount}][difficulty_level]" required>
+                    <option value="">Chọn</option>
+                    <option value="easy">Dễ</option>
+                    <option value="medium">Trung Bình</option>
+                    <option value="hard">Khó</option>
+                </select>
+            </td>
+            <td><textarea class="form-control" name="new_questions[${questionCount}][explanation]" rows="2"></textarea></td>
+            <td>
+                <button type="button" class="btn btn-danger btn-sm delete-row">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(newRow);
+        questionCount++;
+
+        // Thêm xử lý sự kiện xóa dòng
+        const deleteBtn = newRow.querySelector('.delete-row');
+        deleteBtn.addEventListener('click', function() {
+            newRow.remove();
+        });
+    }
+
+    // Hàm thêm câu hỏi đã chọn vào form
+    function addSelectedQuestionToForm(questionId) {
+        const questionRow = document.querySelector(`tr[data-question-id="${questionId}"]`);
+        if (!questionRow) {
+            const selectedQuestion = questionsData.find(q => q.question_id == questionId);
+            if (selectedQuestion) {
+                const tbody = document.querySelector('#newQuestionsTable tbody');
+                const newRow = document.createElement('tr');
+                newRow.setAttribute('data-question-id', questionId);
+                newRow.innerHTML = `
+                    <td>${tbody.children.length + 1}</td>
+                    <td><textarea class="form-control" name="new_questions[${questionCount}][question_text]" rows="2" required>${selectedQuestion.question_text}</textarea></td>
+                    <td><input type="text" class="form-control" name="new_questions[${questionCount}][option_a]" value="${selectedQuestion.option_a}" required></td>
+                    <td><input type="text" class="form-control" name="new_questions[${questionCount}][option_b]" value="${selectedQuestion.option_b}" required></td>
+                    <td><input type="text" class="form-control" name="new_questions[${questionCount}][option_c]" value="${selectedQuestion.option_c}" required></td>
+                    <td><input type="text" class="form-control" name="new_questions[${questionCount}][option_d]" value="${selectedQuestion.option_d}" required></td>
+                    <td>
+                        <select class="form-select" name="new_questions[${questionCount}][correct_answer]" required>
+                            <option value="">Chọn</option>
+                            <option value="A" ${selectedQuestion.correct_answer === 'A' ? 'selected' : ''}>A</option>
+                            <option value="B" ${selectedQuestion.correct_answer === 'B' ? 'selected' : ''}>B</option>
+                            <option value="C" ${selectedQuestion.correct_answer === 'C' ? 'selected' : ''}>C</option>
+                            <option value="D" ${selectedQuestion.correct_answer === 'D' ? 'selected' : ''}>D</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="form-select" name="new_questions[${questionCount}][difficulty_level]" required>
+                            <option value="">Chọn</option>
+                            <option value="easy" ${selectedQuestion.difficulty_level === 'easy' ? 'selected' : ''}>Dễ</option>
+                            <option value="medium" ${selectedQuestion.difficulty_level === 'medium' ? 'selected' : ''}>Trung Bình</option>
+                            <option value="hard" ${selectedQuestion.difficulty_level === 'hard' ? 'selected' : ''}>Khó</option>
+                        </select>
+                    </td>
+                    <td><textarea class="form-control" name="new_questions[${questionCount}][explanation]" rows="2">${selectedQuestion.explanation || ''}</textarea></td>
+                    <td>
+                        <button type="button" class="btn btn-danger btn-sm delete-row">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(newRow);
+                questionCount++;
+
+                // Thêm xử lý sự kiện xóa dòng
+                const deleteBtn = newRow.querySelector('.delete-row');
+                deleteBtn.addEventListener('click', function() {
+                    newRow.remove();
+                    // Bỏ chọn checkbox tương ứng
+                    const checkbox = document.querySelector(`input[name="existing_questions[]"][value="${questionId}"]`);
+                    if (checkbox) {
+                        checkbox.checked = false;
+                    }
+                });
+            }
+        }
+    }
+
+    // Hàm xóa câu hỏi khỏi form
+    function removeQuestionFromForm(questionId) {
+        const questionRow = document.querySelector(`tr[data-question-id="${questionId}"]`);
+        if (questionRow) {
+            questionRow.remove();
+        }
+    }
 </script>
 @endpush
 @endsection 

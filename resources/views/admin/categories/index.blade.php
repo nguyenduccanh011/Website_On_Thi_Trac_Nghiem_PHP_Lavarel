@@ -39,10 +39,10 @@
                                 <td>{{ $category->exams->count() }}</td>
                                 <td>
                                     <div class="btn-group" role="group">
-                                        <a href="{{ route('admin.categories.edit', $category) }}" class="btn btn-primary btn-sm">
+                                        <a href="{{ route('admin.categories.edit', $category->category_id) }}" class="btn btn-primary btn-sm">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <form action="{{ route('admin.categories.destroy', $category) }}" method="POST" class="d-inline">
+                                        <form action="{{ route('admin.categories.destroy', $category->category_id) }}" method="POST" class="d-inline">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-danger btn-sm" 

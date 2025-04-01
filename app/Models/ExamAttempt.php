@@ -41,6 +41,6 @@ class ExamAttempt extends Model
     // Quan hệ với UserAnswer
     public function userAnswers()
     {
-        return $this->hasMany(UserAnswer::class, 'attempt_id');
+        return $this->hasMany(UserAnswer::class, 'exam_attempt_id');
     }
 }

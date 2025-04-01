@@ -9,8 +9,6 @@ class Exam extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'exam_id';
-
     protected $fillable = [
         'title',
         'description',
@@ -37,7 +35,7 @@ class Exam extends Model
     public function questions()
     {
         return $this->belongsToMany(Question::class, 'exam_questions', 'exam_id', 'question_id')
-                    ->withPivot('question_order')
+                    ->withPivot('order_index')
                     ->withTimestamps();
     }
 
