@@ -7,7 +7,9 @@ use App\Models\Question;
 use App\Models\Exam;
 use App\Models\Category;
 use App\Models\ExamBank;
+use App\Imports\QuestionsImport;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AdminQuestionController extends Controller
 {
@@ -91,5 +93,58 @@ class AdminQuestionController extends Controller
         return response()->json([
             'success' => true
         ]);
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:csv,txt',
+        ]);
+
+        try {
+            $file = $request->file('file');
+            $handle = fopen($file->getPathname(), 'r');
+            
+            // Đọc dòng đầu tiên làm header
+            $header = fgetcsv($handle);
+            
+            // Chuyển header thành key
+            $header = array_map(function($value) {
+                return strtolower(trim($value));
+            }, $header);
+            
+            // Đọc từng dòng dữ liệu
+            while (($row = fgetcsv($handle)) !== false) {
+                $data = array_combine($header, $row);
+                
+                Question::create([
+                    'question_text' => $data['question_text'],
+                    'option_a' => $data['option_a'],
+                    'option_b' => $data['option_b'],
+                    'option_c' => $data['option_c'],
+                    'option_d' => $data['option_d'],
+                    'correct_answer' => strtoupper($data['correct_answer']),
+                    'difficulty_level' => strtolower($data['difficulty_level']),
+                    'explanation' => $data['explanation'] ?? null,
+                ]);
+            }
+            
+            fclose($handle);
+            
+            return redirect()->route('admin.questions.index')
+                ->with('success', 'Câu hỏi đã được import thành công.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Có lỗi xảy ra khi import: ' . $e->getMessage());
+        }
+    }
+
+    public function downloadTemplate()
+    {
+        $headers = [
+            'Content-Type' => 'application/vnd.ms-excel',
+            'Content-Disposition' => 'attachment; filename="questions_template.xlsx"'
+        ];
+
+        return response()->download(public_path('templates/questions_template.xlsx'), 'questions_template.xlsx', $headers);
     }
 } 

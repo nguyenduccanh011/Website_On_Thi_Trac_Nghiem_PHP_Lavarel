@@ -165,8 +165,8 @@
                             @foreach($questions as $question)
                                 <tr>
                                     <td>
-                                        <input type="checkbox" name="existing_questions[]" value="{{ $question->question_id }}"
-                                               {{ in_array($question->question_id, old('existing_questions', [])) ? 'checked' : '' }}>
+                                        <input type="checkbox" name="existing_questions[]" value="{{ $question->id }}"
+                                               {{ in_array($question->id, old('existing_questions', [])) ? 'checked' : '' }}>
                                     </td>
                                     <td>{{ $question->question_text }}</td>
                                     <td>
@@ -290,7 +290,7 @@
     function addSelectedQuestionToForm(questionId) {
         const questionRow = document.querySelector(`tr[data-question-id="${questionId}"]`);
         if (!questionRow) {
-            const selectedQuestion = questionsData.find(q => q.question_id == questionId);
+            const selectedQuestion = questionsData.find(q => q.id == questionId);
             if (selectedQuestion) {
                 const tbody = document.querySelector('#newQuestionsTable tbody');
                 const newRow = document.createElement('tr');

@@ -80,6 +80,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Quản lý ngân hàng câu hỏi
     Route::resource('exam-banks', AdminExamBankController::class);
     
+    // Import routes - đặt trước resource routes
+    Route::get('questions/template', [AdminQuestionController::class, 'downloadTemplate'])->name('questions.template');
+    Route::post('questions/import', [AdminQuestionController::class, 'import'])->name('questions.import');
+    Route::post('exams/import', [AdminExamController::class, 'import'])->name('exams.import');
+    
     // Quản lý câu hỏi
     Route::resource('questions', AdminQuestionController::class);
     
