@@ -19,10 +19,10 @@ class Exam extends Model
         'is_active'
     ];
 
-    // Quan hệ với ExamCategory
+    // Quan hệ với Category
     public function category()
     {
-        return $this->belongsTo(ExamCategory::class, 'category_id');
+        return $this->belongsTo(Category::class, 'category_id');
     }
 
     // Quan hệ với ExamQuestion

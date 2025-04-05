@@ -10,6 +10,8 @@ class Category extends Model
 {
     use HasFactory;
 
+    protected $primaryKey = 'category_id';
+
     protected $fillable = [
         'name',
         'description',
@@ -33,6 +35,6 @@ class Category extends Model
 
     public function exams()
     {
-        return $this->hasMany(Exam::class);
+        return $this->hasMany(Exam::class, 'category_id', 'category_id');
     }
 } 

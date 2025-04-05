@@ -75,7 +75,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::resource('users', AdminUserController::class);
     
     // Quản lý danh mục
-    Route::resource('categories', AdminCategoryController::class);
+    Route::resource('categories', AdminCategoryController::class)->parameters([
+        'categories' => 'category:category_id'
+    ]);
     
     // Import routes - đặt trước resource routes
     Route::get('questions/template', [AdminQuestionController::class, 'downloadTemplate'])->name('questions.template');

@@ -14,6 +14,8 @@ class DatabaseSeeder extends Seeder
             ExamBankSeeder::class,
             ExamSeeder::class,
             QuestionSeeder::class,
+            CategoriesTableSeeder::class,
+            ExamsTableSeeder::class,
         ]);
     }
 } 

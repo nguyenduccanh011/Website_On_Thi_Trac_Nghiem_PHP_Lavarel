@@ -16,6 +16,8 @@
         
         <div class="card mb-4">
             <div class="card-header">
+                <h3 class="card-title">Thêm Đề Thi Mới</h3>
+                <div class="card-tools">
                 <h5 class="card-title mb-0">Thông Tin Đề Thi</h5>
             </div>
             <div class="card-body">
