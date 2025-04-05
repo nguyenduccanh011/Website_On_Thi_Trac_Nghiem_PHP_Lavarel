@@ -12,6 +12,17 @@
     </div>
 
     <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Thêm Ngân Hàng Đề Thi Mới</h3>
+            <div class="card-tools">
+                <button type="button" class="btn btn-success" data-toggle="modal" data-target="#importQuestionsModal">
+                    <i class="fas fa-file-import"></i> Import Câu Hỏi
+                </button>
+                <a href="{{ route('admin.questions.template') }}" class="btn btn-info">
+                    <i class="fas fa-download"></i> Tải File Mẫu
+                </a>
+            </div>
+        </div>
         <div class="card-body">
             <form action="{{ route('admin.exam-banks.store') }}" method="POST">
                 @csrf
@@ -85,7 +96,11 @@
                         <table class="table table-bordered">
                             <thead>
                                 <tr>
-                                    <th style="width: 50px;">Chọn</th>
+                                    <th style="width: 50px;">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="select-all">
+                                        </div>
+                                    </th>
                                     <th>Câu Hỏi</th>
                                     <th>Độ Khó</th>
                                     <th>Đáp Án Đúng</th>
@@ -127,4 +142,97 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Import Questions -->
+<div class="modal fade" id="importQuestionsModal" tabindex="-1" aria-labelledby="importQuestionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importQuestionsModalLabel">Import Câu Hỏi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="importQuestionsForm" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="questions_file">Chọn File CSV</label>
+                        <input type="file" class="form-control" id="questions_file" name="file" accept=".csv,.txt" required>
+                    </div>
+                    <div class="alert alert-info">
+                        <h6>Hướng dẫn:</h6>
+                        <p>File CSV phải có các cột sau:</p>
+                        <ul>
+                            <li>question_text: Nội dung câu hỏi</li>
+                            <li>option_a: Đáp án A</li>
+                            <li>option_b: Đáp án B</li>
+                            <li>option_c: Đáp án C</li>
+                            <li>option_d: Đáp án D</li>
+                            <li>correct_answer: Đáp án đúng (A, B, C, D)</li>
+                            <li>difficulty_level: Độ khó (easy, medium, hard)</li>
+                            <li>explanation: Giải thích (tùy chọn)</li>
+                        </ul>
+                        <p>Lưu ý:</p>
+                        <ul>
+                            <li>File phải là định dạng CSV (các giá trị phân cách bằng dấu phẩy)</li>
+                            <li>Dòng đầu tiên phải là tên các cột</li>
+                            <li>Giá trị có chứa dấu phẩy phải đặt trong dấu ngoặc kép</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-primary">Import</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+    $(document).ready(function() {
+        // Xử lý checkbox chọn tất cả
+        $('#select-all').on('change', function() {
+            $('.question-checkbox').prop('checked', $(this).prop('checked'));
+        });
+
+        // Xử lý form import
+        $('#importQuestionsForm').on('submit', function(e) {
+            e.preventDefault();
+            var formData = new FormData(this);
+            
+            $.ajax({
+                url: '{{ route("admin.questions.import") }}',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        // Thêm các câu hỏi đã import vào form
+                        response.questions.forEach(function(question) {
+                            const checkbox = document.querySelector(`input[name="questions[]"][value="${question.id}"]`);
+                            if (checkbox) {
+                                checkbox.checked = true;
+                            }
+                        });
+                        
+                        // Đóng modal
+                        var modal = bootstrap.Modal.getInstance(document.getElementById('importQuestionsModal'));
+                        modal.hide();
+                        
+                        // Hiển thị thông báo thành công
+                        alert('Import câu hỏi thành công!');
+                    } else {
+                        alert('Có lỗi xảy ra: ' + response.message);
+                    }
+                },
+                error: function(xhr) {
+                    alert('Có lỗi xảy ra khi import câu hỏi!');
+                }
+            });
+        });
+    });
+</script>
+@endpush
 @endsection 

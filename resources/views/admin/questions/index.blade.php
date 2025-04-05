@@ -14,7 +14,10 @@
                             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#importModal">
                                 <i class="fas fa-file-import"></i> Import Excel
                             </button>
-                            <a href="{{ route('admin.questions.create') }}" class="btn btn-success">
+                            <a href="{{ route('admin.questions.download-template') }}" class="btn btn-success">
+                                <i class="fas fa-download"></i> Tải File Mẫu
+                            </a>
+                            <a href="{{ route('admin.questions.create') }}" class="btn btn-info">
                                 <i class="fas fa-plus"></i> Thêm Câu Hỏi
                             </a>
                         </div>

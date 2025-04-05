@@ -98,53 +98,62 @@ class AdminQuestionController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'file' => 'required|mimes:csv,txt',
+            'file' => 'required|mimes:csv,txt'
         ]);
 
         try {
             $file = $request->file('file');
             $handle = fopen($file->getPathname(), 'r');
             
-            // Đọc dòng đầu tiên làm header
+            // Đọc dòng header
             $header = fgetcsv($handle);
+            $header = array_map('strtolower', $header);
             
-            // Chuyển header thành key
-            $header = array_map(function($value) {
-                return strtolower(trim($value));
-            }, $header);
+            $importedQuestions = [];
             
             // Đọc từng dòng dữ liệu
-            while (($row = fgetcsv($handle)) !== false) {
-                $data = array_combine($header, $row);
+            while (($data = fgetcsv($handle)) !== false) {
+                $row = array_combine($header, $data);
                 
-                Question::create([
-                    'question_text' => $data['question_text'],
-                    'option_a' => $data['option_a'],
-                    'option_b' => $data['option_b'],
-                    'option_c' => $data['option_c'],
-                    'option_d' => $data['option_d'],
-                    'correct_answer' => strtoupper($data['correct_answer']),
-                    'difficulty_level' => strtolower($data['difficulty_level']),
-                    'explanation' => $data['explanation'] ?? null,
+                // Tạo câu hỏi mới
+                $question = Question::create([
+                    'question_text' => $row['question_text'],
+                    'option_a' => $row['option_a'],
+                    'option_b' => $row['option_b'],
+                    'option_c' => $row['option_c'],
+                    'option_d' => $row['option_d'],
+                    'correct_answer' => strtoupper($row['correct_answer']),
+                    'difficulty_level' => $row['difficulty_level'],
+                    'explanation' => $row['explanation'] ?? null
                 ]);
+                
+                $importedQuestions[] = $question;
             }
             
             fclose($handle);
             
-            return redirect()->route('admin.questions.index')
-                ->with('success', 'Câu hỏi đã được import thành công.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Import câu hỏi thành công!',
+                'questions' => $importedQuestions
+            ]);
+            
         } catch (\Exception $e) {
-            return back()->with('error', 'Có lỗi xảy ra khi import: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+            ], 500);
         }
     }
 
     public function downloadTemplate()
     {
-        $headers = [
-            'Content-Type' => 'application/vnd.ms-excel',
-            'Content-Disposition' => 'attachment; filename="questions_template.xlsx"'
-        ];
+        $filePath = public_path('templates/questions_template.csv');
+        
+        if (!file_exists($filePath)) {
+            return back()->with('error', 'File mẫu không tồn tại.');
+        }
 
-        return response()->download(public_path('templates/questions_template.xlsx'), 'questions_template.xlsx', $headers);
+        return response()->download($filePath, 'questions_template.csv');
     }
 } 

@@ -193,6 +193,53 @@
     </form>
 </div>
 
+<!-- Modal Import Questions -->
+<div class="modal fade" id="importQuestionsModal" tabindex="-1" role="dialog" aria-labelledby="importQuestionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importQuestionsModalLabel">Import Câu Hỏi</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="importQuestionsForm" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="questions_file">Chọn File CSV</label>
+                        <input type="file" class="form-control-file" id="questions_file" name="file" accept=".csv,.txt" required>
+                    </div>
+                    <div class="alert alert-info">
+                        <h6>Hướng dẫn:</h6>
+                        <p>File CSV phải có các cột sau:</p>
+                        <ul>
+                            <li>question_text: Nội dung câu hỏi</li>
+                            <li>option_a: Đáp án A</li>
+                            <li>option_b: Đáp án B</li>
+                            <li>option_c: Đáp án C</li>
+                            <li>option_d: Đáp án D</li>
+                            <li>correct_answer: Đáp án đúng (A, B, C, D)</li>
+                            <li>difficulty_level: Độ khó (easy, medium, hard)</li>
+                            <li>explanation: Giải thích (tùy chọn)</li>
+                        </ul>
+                        <p>Lưu ý:</p>
+                        <ul>
+                            <li>File phải là định dạng CSV (các giá trị phân cách bằng dấu phẩy)</li>
+                            <li>Dòng đầu tiên phải là tên các cột</li>
+                            <li>Giá trị có chứa dấu phẩy phải đặt trong dấu ngoặc kép</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-primary">Import</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
     // Lưu trữ dữ liệu câu hỏi từ PHP
@@ -350,6 +397,40 @@
             questionRow.remove();
         }
     }
+
+    $(document).ready(function() {
+        $('#importQuestionsForm').on('submit', function(e) {
+            e.preventDefault();
+            var formData = new FormData(this);
+            
+            $.ajax({
+                url: '{{ route("admin.questions.import") }}',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        // Thêm các câu hỏi đã import vào form
+                        response.questions.forEach(function(question) {
+                            addSelectedQuestionToForm(question.id);
+                        });
+                        
+                        // Đóng modal
+                        $('#importQuestionsModal').modal('hide');
+                        
+                        // Hiển thị thông báo thành công
+                        alert('Import câu hỏi thành công!');
+                    } else {
+                        alert('Có lỗi xảy ra: ' + response.message);
+                    }
+                },
+                error: function(xhr) {
+                    alert('Có lỗi xảy ra khi import câu hỏi!');
+                }
+            });
+        });
+    });
 </script>
 @endpush
 @endsection 

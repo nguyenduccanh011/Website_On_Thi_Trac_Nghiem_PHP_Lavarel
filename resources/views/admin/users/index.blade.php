@@ -23,19 +23,19 @@
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th>STT</th>
-                            <th>Tên Người Dùng</th>
+                            <th>ID</th>
+                            <th>Tên người dùng</th>
                             <th>Email</th>
-                            <th>Vai Trò</th>
-                            <th>Ngày Tham Gia</th>
-                            <th>Thao Tác</th>
+                            <th>Vai trò</th>
+                            <th>Ngày tạo</th>
+                            <th>Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($users as $user)
                             <tr>
-                                <td>{{ $loop->iteration }}</td>
-                                <td>{{ $user->username }}</td>
+                                <td>{{ $user->id }}</td>
+                                <td>{{ $user->name }}</td>
                                 <td>{{ $user->email }}</td>
                                 <td>
                                     <span class="badge bg-{{ $user->role === 'admin' ? 'danger' : 'primary' }}">
@@ -44,24 +44,21 @@
                                 </td>
                                 <td>{{ $user->created_at->format('d/m/Y H:i') }}</td>
                                 <td>
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ route('admin.users.edit', $user) }}" class="btn btn-primary btn-sm">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <form action="{{ route('admin.users.destroy', $user) }}" method="POST" class="d-inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-danger btn-sm" 
-                                                    onclick="return confirm('Bạn có chắc chắn muốn xóa người dùng này?')">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </form>
-                                    </div>
+                                    <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Bạn có chắc chắn muốn xóa người dùng này?')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center">Chưa có người dùng nào</td>
+                                <td colspan="6" class="text-center">Không có người dùng nào</td>
                             </tr>
                         @endforelse
                     </tbody>

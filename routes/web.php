@@ -77,16 +77,26 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Quản lý danh mục
     Route::resource('categories', AdminCategoryController::class);
     
-    // Quản lý ngân hàng câu hỏi
-    Route::resource('exam-banks', AdminExamBankController::class);
-    
     // Import routes - đặt trước resource routes
     Route::get('questions/template', [AdminQuestionController::class, 'downloadTemplate'])->name('questions.template');
     Route::post('questions/import', [AdminQuestionController::class, 'import'])->name('questions.import');
     Route::post('exams/import', [AdminExamController::class, 'import'])->name('exams.import');
+    Route::post('exam-banks/import', [AdminExamBankController::class, 'import'])->name('exam-banks.import');
+    Route::get('/exams/download-template', [AdminExamController::class, 'downloadTemplate'])->name('exams.download-template');
+    Route::get('/exam-banks/download-template', [AdminExamBankController::class, 'downloadTemplate'])->name('exam-banks.download-template');
+    
+    // Quản lý ngân hàng câu hỏi
+    Route::resource('exam-banks', AdminExamBankController::class);
     
     // Quản lý câu hỏi
-    Route::resource('questions', AdminQuestionController::class);
+    Route::get('/questions', [AdminQuestionController::class, 'index'])->name('questions.index');
+    Route::get('/questions/create', [AdminQuestionController::class, 'create'])->name('questions.create');
+    Route::post('/questions', [AdminQuestionController::class, 'store'])->name('questions.store');
+    Route::get('/questions/{question}/edit', [AdminQuestionController::class, 'edit'])->name('questions.edit');
+    Route::put('/questions/{question}', [AdminQuestionController::class, 'update'])->name('questions.update');
+    Route::delete('/questions/{question}', [AdminQuestionController::class, 'destroy'])->name('questions.destroy');
+    Route::post('/questions/import', [AdminQuestionController::class, 'import'])->name('questions.import');
+    Route::get('/questions/download-template', [AdminQuestionController::class, 'downloadTemplate'])->name('questions.download-template');
     
     // Quản lý đề thi
     Route::resource('exams', AdminExamController::class);

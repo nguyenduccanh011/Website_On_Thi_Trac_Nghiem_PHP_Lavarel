@@ -129,4 +129,92 @@ class AdminExamController extends Controller
         return redirect()->route('admin.exams.index')
             ->with('success', 'Đề thi đã được xóa.');
     }
+
+    public function import(Request $request)
+    {
+        try {
+            $request->validate([
+                'file' => 'required|mimes:csv,txt'
+            ]);
+
+            $file = $request->file('file');
+            $handle = fopen($file->getPathname(), 'r');
+            
+            // Đọc dòng tiêu đề và chuẩn hóa
+            $header = fgetcsv($handle);
+            
+            // Xử lý BOM và chuẩn hóa header
+            $header = array_map(function($value) {
+                $value = preg_replace('/[\x{FEFF}\x{200B}]/u', '', $value);
+                return strtolower(trim($value));
+            }, $header);
+            
+            // Kiểm tra các cột bắt buộc
+            $requiredColumns = ['title', 'description', 'duration', 'total_marks', 'passing_marks', 'is_active'];
+            $missingColumns = array_diff($requiredColumns, $header);
+            
+            if (!empty($missingColumns)) {
+                fclose($handle);
+                return back()->with('error', 'File CSV thiếu các cột bắt buộc: ' . implode(', ', $missingColumns) . '. Các cột hiện có: ' . implode(', ', $header));
+            }
+
+            // Đọc dữ liệu
+            $exams = [];
+            $rowNumber = 2; // Bắt đầu từ dòng 2 (sau header)
+            
+            while (($data = fgetcsv($handle)) !== false) {
+                // Chuẩn hóa dữ liệu
+                $data = array_map(function($value) {
+                    $value = preg_replace('/[\x{FEFF}\x{200B}]/u', '', $value);
+                    return trim($value);
+                }, $data);
+                
+                $row = array_combine($header, $data);
+                
+                // Kiểm tra dữ liệu bắt buộc
+                if (empty($row['title']) || empty($row['duration']) || empty($row['total_marks']) || 
+                    empty($row['passing_marks'])) {
+                    $rowNumber++;
+                    continue;
+                }
+
+                $exams[] = [
+                    'title' => $row['title'],
+                    'description' => $row['description'] ?? null,
+                    'duration' => (int)$row['duration'],
+                    'total_marks' => (int)$row['total_marks'],
+                    'passing_marks' => (int)$row['passing_marks'],
+                    'is_active' => (bool)$row['is_active'],
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ];
+                
+                $rowNumber++;
+            }
+            
+            fclose($handle);
+
+            if (empty($exams)) {
+                return back()->with('error', 'Không tìm thấy dữ liệu hợp lệ trong file CSV');
+            }
+
+            // Import dữ liệu
+            Exam::insert($exams);
+            
+            return back()->with('success', 'Import đề thi thành công!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Có lỗi xảy ra khi import: ' . $e->getMessage());
+        }
+    }
+
+    public function downloadTemplate()
+    {
+        $filePath = public_path('templates/exams_template.csv');
+        
+        if (!file_exists($filePath)) {
+            return back()->with('error', 'File mẫu không tồn tại.');
+        }
+
+        return response()->download($filePath, 'exams_template.csv');
+    }
 } 

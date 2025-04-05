@@ -94,7 +94,9 @@
                         <table class="table table-bordered">
                             <thead>
                                 <tr>
+                                    <th>ID</th>
                                     <th>Tên đề thi</th>
+                                    <th>Người tạo</th>
                                     <th>Ngày tạo</th>
                                     <th>Thao tác</th>
                                 </tr>
@@ -102,8 +104,10 @@
                             <tbody>
                                 @foreach($recentExams as $exam)
                                 <tr>
+                                    <td>{{ $exam->id }}</td>
                                     <td>{{ $exam->title }}</td>
-                                    <td>{{ $exam->created_at->format('d/m/Y') }}</td>
+                                    <td>{{ $exam->user ? $exam->user->name : 'Không xác định' }}</td>
+                                    <td>{{ $exam->created_at->format('d/m/Y H:i') }}</td>
                                     <td>
                                         <a href="{{ route('admin.exams.edit', $exam->id) }}" class="btn btn-sm btn-primary">
                                             <i class="fas fa-edit"></i>
@@ -137,7 +141,7 @@
                             <tbody>
                                 @foreach($recentUsers as $user)
                                 <tr>
-                                    <td>{{ $user->username }}</td>
+                                    <td>{{ $user->name }}</td>
                                     <td>{{ $user->email }}</td>
                                     <td>{{ $user->created_at->format('d/m/Y') }}</td>
                                 </tr>
@@ -169,9 +173,9 @@
                             <tbody>
                                 @foreach($recentAttempts as $attempt)
                                 <tr>
-                                    <td>{{ $attempt->user->username }}</td>
-                                    <td>{{ $attempt->exam->exam_name }}</td>
-                                    <td>{{ $attempt->score }}</td>
+                                    <td>{{ $attempt->user->name }}</td>
+                                    <td>{{ $attempt->exam->title }}</td>
+                                    <td>{{ number_format($attempt->score, 2) }}/{{ $attempt->exam->total_marks }}</td>
                                     <td>{{ $attempt->created_at->format('d/m/Y H:i') }}</td>
                                 </tr>
                                 @endforeach
