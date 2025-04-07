@@ -59,6 +59,11 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('leaderboard.index') }}">Bảng Xếp Hạng</a>
                         </li>
+                        <!-- // Chuyển hướng đến trang admin nếu người dùng là admin -->
+                        
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('admin.dashboard') }}">Trang admin</a>
+                        </li>
                     @endauth
                 </ul>
                 <ul class="navbar-nav">
