@@ -91,6 +91,7 @@ class ExamAttemptController extends Controller
         if ($attempt->end_time) {
             return view('exam_attempts.result', compact('attempt'));
         }
+        
 
         return view('exam_attempts.show', compact('attempt'));
     }
@@ -143,20 +144,21 @@ class ExamAttemptController extends Controller
 
         $answers = $request->validate([
             'answers' => 'required|array',
-            'answers.*' => 'required|in:A,B,C,D'
-        ]);
+            'answers.*' => 'required|in:A,B,C,D,no_answer'
+        ]);   
 
         $correctCount = 0;
         $incorrectCount = 0;
 
         foreach ($answers['answers'] as $questionId => $selectedAnswer) {
+            // Kiểm tra xem câu hỏi có tồn tại không
             $question = Question::findOrFail($questionId);
             $isCorrect = $selectedAnswer === $question->correct_answer;
 
             // Lưu câu trả lời của người dùng
             $attempt->userAnswers()->create([
                 'question_id' => $questionId,
-                'selected_answer' => $selectedAnswer,
+                'selected_answer' => $selectedAnswer == 'no_answer' ? ' ' : $selectedAnswer,
                 'is_correct' => $isCorrect
             ]);
 
@@ -168,8 +170,8 @@ class ExamAttemptController extends Controller
         }
 
         // Tính điểm
-        $totalQuestions = $attempt->total_questions;
-        $score = ($correctCount / $totalQuestions) * 100;
+        $totalQuestions = $attempt->exam->questions()->count();
+        $score = ($correctCount*100 / $totalQuestions);
 
         // Cập nhật kết quả bài thi
         $attempt->update([

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('exam_attempt_id')->constrained('exam_attempts')->onDelete('cascade');
             $table->foreignId('question_id')->constrained('questions')->onDelete('cascade');
-            $table->enum('selected_answer', ['A', 'B', 'C', 'D']);
+            $table->enum('selected_answer', ['A', 'B', 'C', 'D', ' '])->default(' ');
             $table->boolean('is_correct')->default(false);
             $table->timestamps();
         });
