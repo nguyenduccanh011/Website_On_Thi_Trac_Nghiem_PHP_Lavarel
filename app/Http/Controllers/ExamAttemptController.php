@@ -169,9 +169,11 @@ class ExamAttemptController extends Controller
             }
         }
 
+        $exam = $attempt->exam;
+
         // Tính điểm
         $totalQuestions = $attempt->exam->questions()->count();
-        $score = ($correctCount*100 / $totalQuestions);
+        $score = ($correctCount* $attempt->exam->total_marks) / $totalQuestions ;
 
         // Cập nhật kết quả bài thi
         $attempt->update([
@@ -182,7 +184,7 @@ class ExamAttemptController extends Controller
         ]);
 
         // Cập nhật bảng xếp hạng
-        $this->updateLeaderboard($attempt);
+        // $this->updateLeaderboard($attempt);
 
         // Load dữ liệu câu hỏi và câu trả lời
         $attempt->load(['exam.questions', 'userAnswers']);
@@ -196,7 +198,7 @@ class ExamAttemptController extends Controller
         $leaderboard = Leaderboard::firstOrCreate(
             [
                 'user_id' => $attempt->user_id,
-                'exam_id' => $attempt->exam_id
+                'exam_taken' => 1,
             ],
             [
                 'score' => $attempt->score,
