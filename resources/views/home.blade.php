@@ -15,7 +15,7 @@
                     <select name="category" class="form-select">
                         <option value="">Tất cả chủ đề</option>
                         @foreach($categories as $category)
-                            <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
+                            <option value="{{ $category->category_id }}" {{ request('category') == $category->category_id ? 'selected' : '' }}>
                                 {{ $category->name }}
                             </option>
                         @endforeach
