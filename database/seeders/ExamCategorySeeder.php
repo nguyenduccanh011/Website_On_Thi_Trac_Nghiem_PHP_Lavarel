@@ -4,54 +4,34 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ExamCategorySeeder extends Seeder
 {
     public function run()
     {
-        $categories = [
+        DB::table('exam_categories')->insert([
             [
-                'category_id' => 1,
                 'name' => 'TOEIC',
-                'slug' => 'toeic',
-                'description' => 'Bài thi đánh giá khả năng sử dụng tiếng Anh trong môi trường làm việc quốc tế',
+                'slug' => Str::slug('TOEIC'),
+                'description' => 'Đề thi TOEIC',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'category_id' => 2,
                 'name' => 'IELTS',
-                'slug' => 'ielts',
-                'description' => 'Bài thi đánh giá khả năng sử dụng tiếng Anh học thuật và giao tiếp quốc tế',
+                'slug' => Str::slug('IELTS'),
+                'description' => 'Đề thi IELTS',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'category_id' => 3,
                 'name' => 'TOEFL',
-                'slug' => 'toefl',
-                'description' => 'Bài thi đánh giá khả năng sử dụng tiếng Anh trong môi trường học thuật',
+                'slug' => Str::slug('TOEFL'),
+                'description' => 'Đề thi TOEFL',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
-            [
-                'category_id' => 4,
-                'name' => 'Business English',
-                'slug' => 'business-english',
-                'description' => 'Các bài thi về tiếng Anh thương mại và kinh doanh',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'category_id' => 5,
-                'name' => 'General English',
-                'slug' => 'general-english',
-                'description' => 'Các bài thi tiếng Anh tổng quát cho mọi trình độ',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ];
-
-        DB::table('categories')->insert($categories);
+        ]);
     }
 } 

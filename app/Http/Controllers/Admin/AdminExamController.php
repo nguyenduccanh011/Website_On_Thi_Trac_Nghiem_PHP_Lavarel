@@ -107,20 +107,61 @@ class AdminExamController extends Controller
     public function update(Request $request, Exam $exam)
     {
         $validated = $request->validate([
-            'exam_name' => 'required|string|max:255',
+            'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'duration' => 'required|integer|min:1',
             'total_marks' => 'required|integer|min:1',
-            'passing_marks' => 'required|integer|min:1',
-            'difficulty_level' => 'required|in:easy,medium,hard',
-            'category_id' => 'required|exists:categories,category_id',
+            'category_id' => 'required|exists:exam_categories,category_id',
             'is_active' => 'boolean'
         ]);
 
-        $exam->update($validated);
+        try {
+            DB::beginTransaction();
 
-        return redirect()->route('admin.exams.index')
-            ->with('success', 'Đề thi đã được cập nhật thành công.');
+            // Cập nhật thông tin đề thi
+            $exam->update($validated);
+
+            // Xóa tất cả câu hỏi cũ
+            $exam->questions()->detach();
+
+            // Cập nhật câu hỏi mới
+            if ($request->has('new_questions') && is_array($request->new_questions)) {
+                foreach ($request->new_questions as $questionData) {
+                    $question = Question::create([
+                        'question_text' => $questionData['question_text'],
+                        'option_a' => $questionData['option_a'],
+                        'option_b' => $questionData['option_b'],
+                        'option_c' => $questionData['option_c'],
+                        'option_d' => $questionData['option_d'],
+                        'correct_answer' => $questionData['correct_answer'],
+                        'difficulty_level' => $questionData['difficulty_level'],
+                        'explanation' => $questionData['explanation'] ?? null
+                    ]);
+
+                    $exam->questions()->attach($question->id);
+                }
+            }
+
+            // Cập nhật câu hỏi đã có
+            if ($request->has('existing_questions')) {
+                $existingQuestions = is_array($request->existing_questions) 
+                    ? $request->existing_questions 
+                    : explode(',', $request->existing_questions);
+                
+                if (!empty($existingQuestions)) {
+                    $exam->questions()->attach($existingQuestions);
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->route('admin.exams.index')
+                ->with('success', 'Đề thi đã được cập nhật thành công.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()
+                ->with('error', 'Có lỗi xảy ra khi cập nhật đề thi: ' . $e->getMessage());
+        }
     }
 
     public function destroy(Exam $exam)
