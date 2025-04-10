@@ -472,11 +472,13 @@
                 
                 // Thêm input hidden để gửi danh sách câu hỏi
                 if (existingQuestions.length > 0) {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'existing_questions';
-                    input.value = existingQuestions.join(',');
-                    this.appendChild(input);
+                    existingQuestions.forEach(questionId => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'existing_questions[]';
+                        input.value = questionId;
+                        this.appendChild(input);
+                    });
                 }
 
                 // Submit form

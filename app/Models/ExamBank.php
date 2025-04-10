@@ -21,7 +21,8 @@ class ExamBank extends Model
         'total_questions',
         'difficulty_level',
         'time_limit',
-        'is_active'
+        'is_active',
+        'category_id'
     ];
 
     protected $casts = [
