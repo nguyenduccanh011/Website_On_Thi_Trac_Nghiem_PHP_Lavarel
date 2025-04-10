@@ -14,20 +14,20 @@
                     @csrf
 
                     <div class="mb-3">
-                        <label for="category_id" class="form-label">Chủ Đề</label>
-                        <select class="form-select @error('category_id') is-invalid @enderror" 
-                                id="category_id" name="category_id" required>
-                            <option value="">Chọn chủ đề</option>
-                            @foreach($categories as $category)
-                                <option value="{{ $category->category_id }}" {{ old('category_id') == $category->category_id ? 'selected' : '' }}>
-                                    {{ $category->category_name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('category_id')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                            <label for="category_id" class="form-label">Danh Mục</label>
+                            <select class="form-select @error('category_id') is-invalid @enderror" 
+                                    id="category_id" name="category_id" required>
+                                <option value="">Chọn Danh Mục</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->category_id }}" {{ old('category_id') == $category->category_id ? 'selected' : '' }}>
+                                        {{ $category->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('category_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
 
                     <div class="mb-3">
                         <label for="exam_name" class="form-label">Tên Bài Thi</label>
