@@ -34,14 +34,6 @@
                             @enderror
                         </div>
 
-                        <div class="mb-3">
-                            <label for="marks" class="form-label">Điểm</label>
-                            <input type="number" class="form-control @error('marks') is-invalid @enderror" 
-                                   id="marks" name="marks" value="{{ old('marks') }}" required>
-                            @error('marks')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
 
                         <div class="mb-3">
                             <label for="difficulty_level" class="form-label">Độ Khó</label>
