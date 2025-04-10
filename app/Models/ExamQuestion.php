@@ -9,12 +9,10 @@ class ExamQuestion extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'exam_question_id';
-
     protected $fillable = [
         'exam_id',
         'question_id',
-        'question_order'
+        'order_index'
     ];
 
     // Quan hệ với Exam

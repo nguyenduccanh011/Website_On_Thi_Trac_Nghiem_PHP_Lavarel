@@ -8,25 +8,21 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
         Schema::table('leaderboard', function (Blueprint $table) {
-            $table->timestamp('last_attempt_date')->after('rank');
+            $table->integer('rank')->nullable()->change();
         });
     }
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::table('leaderboard', function (Blueprint $table) {
-            $table->dropColumn('last_attempt_date');
+            $table->integer('rank')->nullable(false)->change();
         });
     }
 };

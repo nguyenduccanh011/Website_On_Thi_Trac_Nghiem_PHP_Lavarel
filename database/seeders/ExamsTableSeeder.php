@@ -2,55 +2,62 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use App\Models\Exam;
+use App\Models\Category;
 
 class ExamsTableSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
     public function run()
     {
+        $categoryIds = Category::pluck('category_id')->toArray();
+
         $exams = [
             [
-                'title' => 'Kiểm tra Toán học cơ bản',
-                'description' => 'Bài kiểm tra kiến thức Toán học cơ bản',
-                'category_id' => 1,
-                'duration' => 30,
+                'title' => 'Đề thi Toán lớp 10 - Học kỳ 1',
+                'description' => 'Đề thi môn Toán lớp 10 học kỳ 1 năm học 2023-2024',
+                'duration' => 90,
                 'total_marks' => 100,
-                'passing_marks' => 40,
-                'is_active' => true,
-                'created_at' => now(),
-                'updated_at' => now()
+                'passing_marks' => 50,
+                'is_active' => true
             ],
             [
-                'title' => 'Kiểm tra Vật lý cơ bản',
-                'description' => 'Bài kiểm tra kiến thức Vật lý cơ bản',
-                'category_id' => 2,
-                'duration' => 45,
+                'title' => 'Đề thi Vật Lý lớp 11 - Học kỳ 2',
+                'description' => 'Đề thi môn Vật Lý lớp 11 học kỳ 2 năm học 2023-2024',
+                'duration' => 60,
                 'total_marks' => 100,
-                'passing_marks' => 40,
-                'is_active' => true,
-                'created_at' => now(),
-                'updated_at' => now()
+                'passing_marks' => 50,
+                'is_active' => true
             ],
             [
-                'title' => 'Kiểm tra Hóa học cơ bản',
-                'description' => 'Bài kiểm tra kiến thức Hóa học cơ bản',
-                'category_id' => 3,
-                'duration' => 45,
+                'title' => 'Đề thi Hóa Học lớp 12 - Học kỳ 1',
+                'description' => 'Đề thi môn Hóa Học lớp 12 học kỳ 1 năm học 2023-2024',
+                'duration' => 90,
                 'total_marks' => 100,
-                'passing_marks' => 40,
-                'is_active' => true,
-                'created_at' => now(),
-                'updated_at' => now()
+                'passing_marks' => 50,
+                'is_active' => true
+            ],
+            [
+                'title' => 'Đề thi Tiếng Anh lớp 10 - Học kỳ 2',
+                'description' => 'Đề thi môn Tiếng Anh lớp 10 học kỳ 2 năm học 2023-2024',
+                'duration' => 60,
+                'total_marks' => 100,
+                'passing_marks' => 50,
+                'is_active' => true
+            ],
+            [
+                'title' => 'Đề thi Ngữ Văn lớp 11 - Học kỳ 1',
+                'description' => 'Đề thi môn Ngữ Văn lớp 11 học kỳ 1 năm học 2023-2024',
+                'duration' => 120,
+                'total_marks' => 100,
+                'passing_marks' => 50,
+                'is_active' => true
             ]
         ];
 
-        DB::table('exams')->insert($exams);
+        foreach ($exams as $index => $exam) {
+            $exam['category_id'] = $categoryIds[$index % count($categoryIds)];
+            Exam::create($exam);
+        }
     }
-}
+} 

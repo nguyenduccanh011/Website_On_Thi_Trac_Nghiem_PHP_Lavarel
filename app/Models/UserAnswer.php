@@ -12,7 +12,7 @@ class UserAnswer extends Model
     protected $primaryKey = 'user_answer_id';
 
     protected $fillable = [
-        'attempt_id',
+        'exam_attempt_id',
         'question_id',
         'selected_answer',
         'is_correct'
@@ -34,7 +34,7 @@ class UserAnswer extends Model
     // Quan hệ với ExamAttempt
     public function attempt()
     {
-        return $this->belongsTo(ExamAttempt::class, 'attempt_id');
+        return $this->belongsTo(ExamAttempt::class, 'exam_attempt_id');
     }
 
     // Quan hệ với Question

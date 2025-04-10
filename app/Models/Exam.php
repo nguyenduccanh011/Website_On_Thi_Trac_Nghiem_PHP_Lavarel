@@ -9,8 +9,6 @@ class Exam extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'exam_id';
-
     protected $fillable = [
         'title',
         'description',
@@ -21,10 +19,10 @@ class Exam extends Model
         'is_active'
     ];
 
-    // Quan hệ với ExamCategory
+    // Quan hệ với Category
     public function category()
     {
-        return $this->belongsTo(ExamCategory::class, 'category_id');
+        return $this->belongsTo(Category::class, 'category_id');
     }
 
     // Quan hệ với ExamQuestion
@@ -37,7 +35,7 @@ class Exam extends Model
     public function questions()
     {
         return $this->belongsToMany(Question::class, 'exam_questions', 'exam_id', 'question_id')
-                    ->withPivot('question_order')
+                    ->withPivot('order_index')
                     ->withTimestamps();
     }
 

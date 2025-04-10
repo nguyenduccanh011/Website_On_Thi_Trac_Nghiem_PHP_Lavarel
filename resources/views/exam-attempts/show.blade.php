@@ -3,90 +3,187 @@
 @section('title', 'Chi Tiết Bài Thi')
 
 @section('content')
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h2 class="mb-0">Chi Tiết Bài Thi</h2>
-            </div>
-            <div class="card-body">
-                <div class="text-center mb-4">
-                    <h3>{{ $attempt->exam->exam_name }}</h3>
-                    <div class="display-4 {{ $attempt->score >= $attempt->exam->passing_marks ? 'text-success' : 'text-danger' }}">
-                        {{ number_format($attempt->score, 1) }}/{{ $attempt->exam->total_marks }}
-                    </div>
-                    <p class="lead">
-                        @if($attempt->score >= $attempt->exam->passing_marks)
-                            <span class="badge bg-success">Đạt</span>
-                        @else
-                            <span class="badge bg-danger">Không Đạt</span>
-                        @endif
-                    </p>
-                </div>
-
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <h5 class="card-title">Thông Tin Bài Thi</h5>
-                        <ul class="list-unstyled">
-                            <li><strong>Môn Học:</strong> {{ $attempt->exam->subject->subject_name }}</li>
-                            <li><strong>Thời Gian:</strong> {{ $attempt->exam->duration }} phút</li>
-                            <li><strong>Điểm Đạt:</strong> {{ $attempt->exam->passing_marks }}/{{ $attempt->exam->total_marks }}</li>
-                        </ul>
-                    </div>
-                    <div class="col-md-6">
-                        <h5 class="card-title">Thông Tin Làm Bài</h5>
-                        <ul class="list-unstyled">
-                            <li><strong>Thời Gian Bắt Đầu:</strong> {{ $attempt->start_time->format('d/m/Y H:i') }}</li>
-                            <li><strong>Thời Gian Kết Thúc:</strong> {{ $attempt->end_time->format('d/m/Y H:i') }}</li>
-                            <li><strong>Thời Gian Làm Bài:</strong> {{ $attempt->duration }} phút</li>
-                        </ul>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">{{ $exam->title }}</h4>
+                        <div class="text-end">
+                            <div class="badge bg-primary">Thời gian còn lại: <span id="timer">00:00</span></div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="mb-4">
-                    <h5 class="card-title">Chi Tiết Câu Trả Lời</h5>
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>STT</th>
-                                    <th>Câu Hỏi</th>
-                                    <th>Đáp Án Của Bạn</th>
-                                    <th>Đáp Án Đúng</th>
-                                    <th>Kết Quả</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($attempt->answers as $answer)
-                                    <tr>
-                                        <td>{{ $loop->iteration }}</td>
-                                        <td>{{ $answer->question->question_text }}</td>
-                                        <td>{{ $answer->selected_answer }}</td>
-                                        <td>{{ $answer->question->correct_answer }}</td>
-                                        <td>
-                                            @if($answer->is_correct)
-                                                <span class="badge bg-success">Đúng</span>
-                                            @else
-                                                <span class="badge bg-danger">Sai</span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                <div class="card-body">
+                    <form id="examForm" action="{{ route('exam-attempts.submit', $examAttempt->id) }}" method="POST">
+                        @csrf
+                        <div class="mb-4">
+                            <h5>Hướng dẫn:</h5>
+                            <ul>
+                                <li>Bạn có {{ $exam->duration }} phút để hoàn thành bài thi</li>
+                                <li>Mỗi câu hỏi chỉ có một đáp án đúng</li>
+                                <li>Bạn có thể điều hướng giữa các câu hỏi bằng nút "Câu trước" và "Câu sau"</li>
+                                <li>Đảm bảo nộp bài trước khi hết thời gian</li>
+                            </ul>
+                        </div>
 
-                <div class="d-flex justify-content-between">
-                    <a href="{{ route('exam-attempts.index') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Quay Lại Danh Sách
-                    </a>
-                    <a href="{{ route('exams.show', $attempt->exam) }}" class="btn btn-primary">
-                        <i class="fas fa-eye"></i> Xem Đề Thi
-                    </a>
+                        <div class="questions">
+                            @foreach($questions as $question)
+                            <div class="question-block" id="question_{{ $question->id }}" style="display: none;">
+                                <div class="mb-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="mb-0">Câu {{ $loop->iteration }}</h5>
+                                        <span class="badge bg-{{ $question->difficulty_level === 'easy' ? 'success' : ($question->difficulty_level === 'medium' ? 'warning' : 'danger') }}">
+                                            {{ ucfirst($question->difficulty_level) }}
+                                        </span>
+                                    </div>
+                                    <p class="mb-3">{{ $question->question_text }}</p>
+                                    
+                                    <div class="options">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="radio" 
+                                                   name="answers[{{ $question->id }}]" 
+                                                   id="option_a_{{ $question->id }}" 
+                                                   value="A"
+                                                   {{ isset($userAnswers[$question->id]) && $userAnswers[$question->id] === 'A' ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="option_a_{{ $question->id }}">
+                                                A. {{ $question->option_a }}
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="radio" 
+                                                   name="answers[{{ $question->id }}]" 
+                                                   id="option_b_{{ $question->id }}" 
+                                                   value="B"
+                                                   {{ isset($userAnswers[$question->id]) && $userAnswers[$question->id] === 'B' ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="option_b_{{ $question->id }}">
+                                                B. {{ $question->option_b }}
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="radio" 
+                                                   name="answers[{{ $question->id }}]" 
+                                                   id="option_c_{{ $question->id }}" 
+                                                   value="C"
+                                                   {{ isset($userAnswers[$question->id]) && $userAnswers[$question->id] === 'C' ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="option_c_{{ $question->id }}">
+                                                C. {{ $question->option_c }}
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="radio" 
+                                                   name="answers[{{ $question->id }}]" 
+                                                   id="option_d_{{ $question->id }}" 
+                                                   value="D"
+                                                   {{ isset($userAnswers[$question->id]) && $userAnswers[$question->id] === 'D' ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="option_d_{{ $question->id }}">
+                                                D. {{ $question->option_d }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-secondary" id="prevQuestion" style="display: none;">Câu trước</button>
+                            <button type="button" class="btn btn-primary" id="nextQuestion">Câu sau</button>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-success">Nộp bài</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const questions = document.querySelectorAll('.question-block');
+    const prevBtn = document.getElementById('prevQuestion');
+    const nextBtn = document.getElementById('nextQuestion');
+    let currentQuestion = 0;
+
+    // Lưu trữ đáp án đã chọn
+    const answers = {};
+
+    function showQuestion(index) {
+        questions.forEach(q => q.style.display = 'none');
+        questions[index].style.display = 'block';
+        
+        prevBtn.style.display = index === 0 ? 'none' : 'block';
+        nextBtn.style.display = index === questions.length - 1 ? 'none' : 'block';
+
+        // Khôi phục đáp án đã chọn cho câu hỏi hiện tại
+        const currentQuestionId = questions[index].id.split('_')[1];
+        if (answers[currentQuestionId]) {
+            const radioButton = document.querySelector(`input[name="answers[${currentQuestionId}]"][value="${answers[currentQuestionId]}"]`);
+            if (radioButton) {
+                radioButton.checked = true;
+            }
+        }
+    }
+
+    // Lưu đáp án khi chọn
+    questions.forEach(question => {
+        const questionId = question.id.split('_')[1];
+        const radioButtons = question.querySelectorAll('input[type="radio"]');
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', function() {
+                answers[questionId] = this.value;
+            });
+        });
+    });
+
+    prevBtn.addEventListener('click', () => {
+        if (currentQuestion > 0) {
+            currentQuestion--;
+            showQuestion(currentQuestion);
+        }
+    });
+
+    nextBtn.addEventListener('click', () => {
+        if (currentQuestion < questions.length - 1) {
+            currentQuestion++;
+            showQuestion(currentQuestion);
+        }
+    });
+
+    // Hiển thị câu hỏi đầu tiên
+    showQuestion(0);
+
+    // Xử lý nộp bài
+    const form = document.getElementById('examForm');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Kiểm tra xem đã trả lời hết các câu hỏi chưa
+        const unansweredQuestions = [];
+        questions.forEach((q, index) => {
+            const questionId = q.id.split('_')[1];
+            if (!answers[questionId]) {
+                unansweredQuestions.push(index + 1);
+            }
+        });
+
+        if (unansweredQuestions.length > 0) {
+            if (confirm(`Bạn chưa trả lời các câu hỏi sau: ${unansweredQuestions.join(', ')}. Bạn có muốn nộp bài không?`)) {
+                this.submit();
+            }
+        } else {
+            if (confirm('Bạn có chắc chắn muốn nộp bài?')) {
+                this.submit();
+            }
+        }
+    });
+});
+</script>
+@endpush
 @endsection 

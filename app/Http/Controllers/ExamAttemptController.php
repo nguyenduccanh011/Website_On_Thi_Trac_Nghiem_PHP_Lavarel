@@ -34,7 +34,7 @@ class ExamAttemptController extends Controller
     {
         // Kiểm tra xem người dùng đã làm bài thi này chưa
         $existingAttempt = ExamAttempt::where('user_id', Auth::id())
-            ->where('exam_id', $exam->exam_id)
+            ->where('exam_id', $exam->id)
             ->first();
 
         if ($existingAttempt) {
@@ -45,7 +45,7 @@ class ExamAttemptController extends Controller
         // Tạo lần làm bài mới
         $attempt = ExamAttempt::create([
             'user_id' => Auth::id(),
-            'exam_id' => $exam->exam_id,
+            'exam_id' => $exam->id,
             'start_time' => now(),
             'total_questions' => $exam->questions()->count()
         ]);
@@ -91,6 +91,7 @@ class ExamAttemptController extends Controller
         if ($attempt->end_time) {
             return view('exam_attempts.result', compact('attempt'));
         }
+        
 
         return view('exam_attempts.show', compact('attempt'));
     }
@@ -143,20 +144,21 @@ class ExamAttemptController extends Controller
 
         $answers = $request->validate([
             'answers' => 'required|array',
-            'answers.*' => 'required|in:A,B,C,D'
-        ]);
+            'answers.*' => 'required|in:A,B,C,D,no_answer'
+        ]);   
 
         $correctCount = 0;
         $incorrectCount = 0;
 
         foreach ($answers['answers'] as $questionId => $selectedAnswer) {
+            // Kiểm tra xem câu hỏi có tồn tại không
             $question = Question::findOrFail($questionId);
             $isCorrect = $selectedAnswer === $question->correct_answer;
 
             // Lưu câu trả lời của người dùng
             $attempt->userAnswers()->create([
                 'question_id' => $questionId,
-                'selected_answer' => $selectedAnswer,
+                'selected_answer' => $selectedAnswer == 'no_answer' ? ' ' : $selectedAnswer,
                 'is_correct' => $isCorrect
             ]);
 
@@ -167,21 +169,22 @@ class ExamAttemptController extends Controller
             }
         }
 
+        $exam = $attempt->exam;
+
         // Tính điểm
-        $totalQuestions = $attempt->total_questions;
-        $score = ($correctCount / $totalQuestions) * $attempt->exam->total_marks;
+        $totalQuestions = $attempt->exam->questions()->count();
+        $score = ($correctCount* $attempt->exam->total_marks) / $totalQuestions ;
 
         // Cập nhật kết quả bài thi
         $attempt->update([
             'end_time' => now(),
             'score' => $score,
             'correct_answers' => $correctCount,
-            'incorrect_answers' => $incorrectCount,
-            'status' => $score >= $attempt->exam->passing_marks ? 'completed' : 'failed'
+            'incorrect_answers' => $incorrectCount
         ]);
 
         // Cập nhật bảng xếp hạng
-        $this->updateLeaderboard($attempt);
+        // $this->updateLeaderboard($attempt);
 
         // Load dữ liệu câu hỏi và câu trả lời
         $attempt->load(['exam.questions', 'userAnswers']);
@@ -195,12 +198,11 @@ class ExamAttemptController extends Controller
         $leaderboard = Leaderboard::firstOrCreate(
             [
                 'user_id' => $attempt->user_id,
-                'exam_id' => $attempt->exam_id
+                'exam_taken' => 1,
             ],
             [
                 'score' => $attempt->score,
-                'last_attempt_date' => now(),
-                'rank' => 0
+                'last_attempt_date' => now()
             ]
         );
         

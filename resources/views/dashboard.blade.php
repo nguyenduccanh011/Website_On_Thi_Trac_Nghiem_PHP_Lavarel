@@ -26,7 +26,7 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Bài Thi Đạt</h5>
-                    <p class="display-4">{{ Auth::user()->examAttempts()->join('exams', 'exam_attempts.exam_id', '=', 'exams.exam_id')->where('exam_attempts.score', '>=', 'exams.passing_marks')->count() }}</p>
+                    <p class="display-4">{{ Auth::user()->examAttempts()->join('exams', 'exam_attempts.exam_id', '=', 'exams.id')->where('exam_attempts.score', '>=', 'exams.passing_marks')->count() }}</p>
                 </div>
             </div>
         </div>
@@ -35,7 +35,7 @@
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Bài Thi Không Đạt</h5>
-                    <p class="display-4">{{ Auth::user()->examAttempts()->join('exams', 'exam_attempts.exam_id', '=', 'exams.exam_id')->where('exam_attempts.score', '<', 'exams.passing_marks')->count() }}</p>
+                    <p class="display-4">{{ Auth::user()->examAttempts()->join('exams', 'exam_attempts.exam_id', '=', 'exams.id')->where('exam_attempts.score', '<', 'exams.passing_marks')->count() }}</p>
                 </div>
             </div>
         </div>
@@ -54,7 +54,7 @@
                                 <tr>
                                     <th>STT</th>
                                     <th>Đề Thi</th>
-                                    <th>Môn Học</th>
+                                    <th>Độ Khó</th>
                                     <th>Điểm Số</th>
                                     <th>Trạng Thái</th>
                                     <th>Thao Tác</th>
@@ -65,7 +65,11 @@
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ $attempt->exam->exam_name }}</td>
-                                        <td>{{ $attempt->exam->subject->subject_name }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ $attempt->exam->difficulty_level === 'easy' ? 'success' : ($attempt->exam->difficulty_level === 'medium' ? 'warning' : 'danger') }}">
+                                                {{ ucfirst($attempt->exam->difficulty_level) }}
+                                            </span>
+                                        </td>
                                         <td>
                                             <span class="badge bg-{{ $attempt->score >= $attempt->exam->passing_marks ? 'success' : 'danger' }}">
                                                 {{ number_format($attempt->score, 1) }}/{{ $attempt->exam->total_marks }}

@@ -10,9 +10,9 @@ return new class extends Migration
     {
         Schema::create('exam_questions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('exam_id')->references('exam_id')->on('exams')->onDelete('cascade');
-            $table->foreignId('question_id')->references('question_id')->on('questions')->onDelete('cascade');
-            $table->integer('question_order')->nullable();
+            $table->foreignId('exam_id')->constrained('exams')->onDelete('cascade');
+            $table->foreignId('question_id')->constrained('questions')->onDelete('cascade');
+            $table->integer('order_index')->default(0);
             $table->timestamps();
         });
     }

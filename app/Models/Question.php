@@ -9,8 +9,6 @@ class Question extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'question_id';
-
     protected $fillable = [
         'question_text',
         'option_a',
@@ -20,7 +18,10 @@ class Question extends Model
         'correct_answer',
         'explanation',
         'difficulty_level',
-        'subject_id'
+        'subject_id',
+        'exam_id',
+        'exam_bank_id',
+        'category_id'
     ];
 
     // Quan hệ với Subject
@@ -39,7 +40,7 @@ class Question extends Model
     public function exams()
     {
         return $this->belongsToMany(Exam::class, 'exam_questions', 'question_id', 'exam_id')
-                    ->withPivot('question_order')
+                    ->withPivot('order_index')
                     ->withTimestamps();
     }
 
@@ -53,5 +54,20 @@ class Question extends Model
     public function answers()
     {
         return $this->hasMany(Answer::class, 'question_id');
+    }
+
+    public function exam()
+    {
+        return $this->belongsTo(Exam::class);
+    }
+
+    public function examBank()
+    {
+        return $this->belongsTo(ExamBank::class, 'exam_bank_id', 'bank_id');
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
     }
 }

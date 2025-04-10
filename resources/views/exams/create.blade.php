@@ -14,20 +14,20 @@
                     @csrf
 
                     <div class="mb-3">
-                        <label for="category_id" class="form-label">Chủ Đề</label>
-                        <select class="form-select @error('category_id') is-invalid @enderror" 
-                                id="category_id" name="category_id" required>
-                            <option value="">Chọn chủ đề</option>
-                            @foreach($categories as $category)
-                                <option value="{{ $category->category_id }}" {{ old('category_id') == $category->category_id ? 'selected' : '' }}>
-                                    {{ $category->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('category_id')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+                            <label for="category_id" class="form-label">Danh Mục</label>
+                            <select class="form-select @error('category_id') is-invalid @enderror" 
+                                    id="category_id" name="category_id" required>
+                                <option value="">Chọn Danh Mục</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->category_id }}" {{ old('category_id') == $category->category_id ? 'selected' : '' }}>
+                                        {{ $category->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('category_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
 
                     <div class="mb-3">
                         <label for="exam_name" class="form-label">Tên Bài Thi</label>
@@ -45,39 +45,6 @@
                         @error('description')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="easy_question_count" class="form-label">Số Câu Dễ</label>
-                                <input type="number" class="form-control @error('easy_question_count') is-invalid @enderror" 
-                                       id="easy_question_count" name="easy_question_count" value="{{ old('easy_question_count', 0) }}" min="0" required>
-                                @error('easy_question_count')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="medium_question_count" class="form-label">Số Câu Trung Bình</label>
-                                <input type="number" class="form-control @error('medium_question_count') is-invalid @enderror" 
-                                       id="medium_question_count" name="medium_question_count" value="{{ old('medium_question_count', 0) }}" min="0" required>
-                                @error('medium_question_count')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="hard_question_count" class="form-label">Số Câu Khó</label>
-                                <input type="number" class="form-control @error('hard_question_count') is-invalid @enderror" 
-                                       id="hard_question_count" name="hard_question_count" value="{{ old('hard_question_count', 0) }}" min="0" required>
-                                @error('hard_question_count')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
                     </div>
 
                     <div class="row">
