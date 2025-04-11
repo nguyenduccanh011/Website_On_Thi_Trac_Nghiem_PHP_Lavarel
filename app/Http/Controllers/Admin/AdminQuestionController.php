@@ -15,7 +15,7 @@ class AdminQuestionController extends Controller
 {
     public function index()
     {
-        $questions = Question::with(['exam', 'category', 'examBank'])
+        $questions = Question::with(['exam', 'category', 'examBanks'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         return view('admin.questions.index', compact('questions'));
@@ -120,7 +120,6 @@ class AdminQuestionController extends Controller
             
             return response()->json([
                 'success' => true,
-                'message' => 'Import câu hỏi thành công!',
                 'questions' => $importedQuestions
             ]);
             

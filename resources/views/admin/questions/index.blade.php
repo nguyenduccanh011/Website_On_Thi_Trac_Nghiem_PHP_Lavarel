@@ -41,7 +41,11 @@
                                     <tr>
                                         <td>{{ $question->id }}</td>
                                         <td>{{ Str::limit($question->question_text, 100) }}</td>
-                                        <td>{{ $question->examBank ? $question->examBank->name : 'N/A' }}</td>
+                                        <td>
+                                            @foreach($question->examBanks as $examBank)
+                                                <span class="badge bg-primary">{{ $examBank->name }}</span>
+                                            @endforeach
+                                        </td>
                                         <td>
                                             <span class="badge badge-{{ 
                                                 $question->difficulty_level === 'easy' ? 'success' : 
@@ -57,7 +61,7 @@
                                         </td>
                                         <td>
                                             <a href="{{ route('admin.questions.edit', $question->id) }}" 
-                                               class="btn btn-sm btn-info">
+                                               class="btn btn-sm btn-primary">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             <form action="{{ route('admin.questions.destroy', $question->id) }}" 

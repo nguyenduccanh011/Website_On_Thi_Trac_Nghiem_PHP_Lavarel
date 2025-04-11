@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Exam;
 use App\Models\ExamCategory;
 use App\Models\Question;
+use App\Models\ExamBank;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -20,8 +21,11 @@ class AdminExamController extends Controller
     public function create()
     {
         $categories = ExamCategory::all();
+        $examBanks = ExamBank::withCount(['questions' => function($query) {
+            $query->select(DB::raw('count(*)'));
+        }])->get();
         $questions = Question::all();
-        return view('admin.exams.create', compact('categories', 'questions'));
+        return view('admin.exams.create', compact('categories', 'examBanks', 'questions'));
     }
 
     public function store(Request $request)
@@ -31,21 +35,8 @@ class AdminExamController extends Controller
             'description' => 'nullable|string',
             'category_id' => 'required|exists:categories,category_id',
             'duration' => 'required|integer|min:1',
-            'total_marks' => 'required|integer|min:1',
-            'passing_marks' => 'required|integer|min:1',
-            'difficulty_level' => 'required|in:easy,medium,hard',
-            'is_active' => 'boolean',
-            'new_questions' => 'required|array|min:1',
-            'new_questions.*.question_text' => 'required|string',
-            'new_questions.*.option_a' => 'required|string',
-            'new_questions.*.option_b' => 'required|string',
-            'new_questions.*.option_c' => 'required|string',
-            'new_questions.*.option_d' => 'required|string',
-            'new_questions.*.correct_answer' => 'required|in:A,B,C,D',
-            'new_questions.*.difficulty_level' => 'required|in:easy,medium,hard',
-            'new_questions.*.explanation' => 'nullable|string',
-            'existing_questions' => 'nullable|array',
-            'existing_questions.*' => 'exists:questions,id'
+            'questions' => 'required|array|min:1',
+            'questions.*' => 'exists:questions,id'
         ]);
 
         try {
@@ -57,32 +48,13 @@ class AdminExamController extends Controller
                 'description' => $request->description,
                 'category_id' => $request->category_id,
                 'duration' => $request->duration,
-                'total_marks' => $request->total_marks,
-                'passing_marks' => $request->passing_marks,
-                'difficulty_level' => $request->difficulty_level,
-                'is_active' => $request->boolean('is_active', true)
+                'total_marks' => count($request->questions) * 1, // Mỗi câu 1 điểm
+                'passing_marks' => ceil(count($request->questions) * 0.6), // 60% để đậu
+                'is_active' => true
             ]);
 
-            // Thêm câu hỏi mới
-            foreach ($request->new_questions as $questionData) {
-                $question = Question::create([
-                    'question_text' => $questionData['question_text'],
-                    'option_a' => $questionData['option_a'],
-                    'option_b' => $questionData['option_b'],
-                    'option_c' => $questionData['option_c'],
-                    'option_d' => $questionData['option_d'],
-                    'correct_answer' => $questionData['correct_answer'],
-                    'difficulty_level' => $questionData['difficulty_level'],
-                    'explanation' => $questionData['explanation'] ?? null
-                ]);
-
-                $exam->questions()->attach($question->id);
-            }
-
-            // Thêm câu hỏi đã có
-            if ($request->has('existing_questions')) {
-                $exam->questions()->attach($request->existing_questions);
-            }
+            // Thêm câu hỏi vào đề thi
+            $exam->questions()->attach($request->questions);
 
             DB::commit();
 
@@ -92,6 +64,47 @@ class AdminExamController extends Controller
             DB::rollBack();
             return back()->withInput()
                 ->with('error', 'Có lỗi xảy ra khi tạo đề thi: ' . $e->getMessage());
+        }
+    }
+
+    public function getRandomQuestions(Request $request, ExamBank $examBank)
+    {
+        $request->validate([
+            'easy_count' => 'required|integer|min:0',
+            'medium_count' => 'required|integer|min:0',
+            'hard_count' => 'required|integer|min:0'
+        ]);
+
+        try {
+            $easyQuestions = $examBank->questions()
+                ->where('difficulty_level', 'easy')
+                ->inRandomOrder()
+                ->limit($request->easy_count)
+                ->get();
+
+            $mediumQuestions = $examBank->questions()
+                ->where('difficulty_level', 'medium')
+                ->inRandomOrder()
+                ->limit($request->medium_count)
+                ->get();
+
+            $hardQuestions = $examBank->questions()
+                ->where('difficulty_level', 'hard')
+                ->inRandomOrder()
+                ->limit($request->hard_count)
+                ->get();
+
+            $questions = $easyQuestions->concat($mediumQuestions)->concat($hardQuestions);
+
+            return response()->json([
+                'success' => true,
+                'questions' => $questions
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra khi lấy câu hỏi: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -125,32 +138,8 @@ class AdminExamController extends Controller
             $exam->questions()->detach();
 
             // Cập nhật câu hỏi mới
-            if ($request->has('new_questions') && is_array($request->new_questions)) {
-                foreach ($request->new_questions as $questionData) {
-                    $question = Question::create([
-                        'question_text' => $questionData['question_text'],
-                        'option_a' => $questionData['option_a'],
-                        'option_b' => $questionData['option_b'],
-                        'option_c' => $questionData['option_c'],
-                        'option_d' => $questionData['option_d'],
-                        'correct_answer' => $questionData['correct_answer'],
-                        'difficulty_level' => $questionData['difficulty_level'],
-                        'explanation' => $questionData['explanation'] ?? null
-                    ]);
-
-                    $exam->questions()->attach($question->id);
-                }
-            }
-
-            // Cập nhật câu hỏi đã có
-            if ($request->has('existing_questions')) {
-                $existingQuestions = is_array($request->existing_questions) 
-                    ? $request->existing_questions 
-                    : explode(',', $request->existing_questions);
-                
-                if (!empty($existingQuestions)) {
-                    $exam->questions()->attach($existingQuestions);
-                }
+            if ($request->has('questions')) {
+                $exam->questions()->attach($request->questions);
             }
 
             DB::commit();

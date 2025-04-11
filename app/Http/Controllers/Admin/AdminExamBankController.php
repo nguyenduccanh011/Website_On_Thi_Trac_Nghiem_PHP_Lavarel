@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class AdminExamBankController extends Controller
 {
@@ -140,90 +141,58 @@ class AdminExamBankController extends Controller
     public function update(Request $request, ExamBank $examBank)
     {
         try {
-            DB::beginTransaction();
-
-            // Log dữ liệu đầu vào
-            Log::info('ExamBank update request data:', $request->all());
+            // Log request data for debugging
+            Log::info('Update ExamBank Request:', [
+                'request_data' => $request->all(),
+                'current_category_id' => $examBank->category_id
+            ]);
 
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
-                'category_ids' => 'required|array',
-                'category_ids.*' => 'exists:categories,category_id',
                 'description' => 'nullable|string',
-                'difficulty_level' => 'required|in:easy,medium,hard',
-                'total_questions' => 'required|integer|min:1',
-                'new_questions' => 'nullable|array',
-                'new_questions.*.question_text' => 'required|string',
-                'new_questions.*.option_a' => 'required|string',
-                'new_questions.*.option_b' => 'required|string',
-                'new_questions.*.option_c' => 'required|string',
-                'new_questions.*.option_d' => 'required|string',
-                'new_questions.*.correct_answer' => 'required|in:A,B,C,D',
-                'new_questions.*.difficulty_level' => 'required|in:easy,medium,hard',
-                'new_questions.*.explanation' => 'nullable|string',
-                'existing_questions' => 'nullable|array',
-                'existing_questions.*' => 'exists:questions,id'
+                'is_active' => 'required|boolean',
+                'category_id' => 'required|exists:categories,category_id',
+                'questions' => 'nullable|array',
+                'questions.*' => 'exists:questions,id'
             ]);
 
-            // Log dữ liệu đã validate
-            Log::info('ExamBank validated data:', $validated);
+            DB::beginTransaction();
 
-            // Cập nhật thông tin ngân hàng câu hỏi
-            $examBankData = [
+            // Log validated data
+            Log::info('Validated data:', $validated);
+
+            // Cập nhật thông tin ngân hàng đề
+            $examBank->update([
                 'name' => $validated['name'],
-                'slug' => Str::slug($validated['name']),
                 'description' => $validated['description'],
-                'difficulty_level' => $validated['difficulty_level'],
-                'total_questions' => $validated['total_questions']
-            ];
+                'is_active' => $validated['is_active'],
+                'category_id' => $validated['category_id']
+            ]);
 
-            $examBank->update($examBankData);
-
-            // Cập nhật danh mục
-            $examBank->categories()->sync($validated['category_ids']);
-
-            // Xóa tất cả câu hỏi cũ
-            $examBank->questions()->update(['exam_bank_id' => null]);
-
-            // Thêm câu hỏi mới
-            if (isset($validated['new_questions'])) {
-                foreach ($validated['new_questions'] as $questionData) {
-                    $question = Question::create([
-                        'question_text' => $questionData['question_text'],
-                        'option_a' => $questionData['option_a'],
-                        'option_b' => $questionData['option_b'],
-                        'option_c' => $questionData['option_c'],
-                        'option_d' => $questionData['option_d'],
-                        'correct_answer' => $questionData['correct_answer'],
-                        'difficulty_level' => $questionData['difficulty_level'],
-                        'explanation' => $questionData['explanation'] ?? null,
-                        'exam_bank_id' => $examBank->bank_id,
-                        'category_id' => $validated['category_ids'][0]
-                    ]);
-                }
-            }
-
-            // Thêm câu hỏi đã có
-            if (isset($validated['existing_questions']) && is_array($validated['existing_questions'])) {
-                foreach ($validated['existing_questions'] as $questionId) {
-                    Question::where('id', $questionId)->update([
-                        'exam_bank_id' => $examBank->bank_id,
-                        'category_id' => $validated['category_ids'][0]
-                    ]);
-                }
+            // Cập nhật quan hệ many-to-many với questions
+            if (isset($validated['questions'])) {
+                $examBank->questions()->sync($validated['questions']);
             }
 
             DB::commit();
 
             return redirect()->route('admin.exam-banks.index')
-                ->with('success', 'Ngân hàng câu hỏi đã được cập nhật thành công.');
+                ->with('success', 'Ngân hàng đề thi đã được cập nhật thành công.');
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            Log::error('Validation error:', [
+                'errors' => $e->errors(),
+                'request_data' => $request->all()
+            ]);
+            return back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             DB::rollBack();
-            // Log lỗi
-            Log::error('ExamBank update error: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
-            return back()->withInput()
-                ->with('error', 'Có lỗi xảy ra khi cập nhật ngân hàng câu hỏi: ' . $e->getMessage());
+            Log::error('Error updating exam bank:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
+            return back()->with('error', 'Có lỗi xảy ra khi cập nhật ngân hàng đề thi: ' . $e->getMessage())->withInput();
         }
     }
 

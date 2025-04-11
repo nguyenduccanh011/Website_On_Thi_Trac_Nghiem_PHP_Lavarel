@@ -91,6 +91,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     
     // Quản lý ngân hàng câu hỏi
     Route::resource('exam-banks', AdminExamBankController::class);
+    Route::post('exam-banks/{examBank}/random-questions', [AdminExamController::class, 'getRandomQuestions'])
+        ->name('exam-banks.random-questions');
     
     // Quản lý câu hỏi
     Route::get('/questions', [AdminQuestionController::class, 'index'])->name('questions.index');

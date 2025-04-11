@@ -15,7 +15,7 @@
                     <h5 class="card-title mb-0">Chỉnh sửa ngân hàng đề thi</h5>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('admin.exam-banks.update', $examBank->bank_id) }}" method="POST" id="examBankForm">
+                    <form action="{{ route('admin.exam-banks.update', $examBank) }}" method="POST" id="examBankForm">
                         @csrf
                         @method('PUT')
                         
@@ -29,23 +29,24 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-                                
+
                                 <div class="mb-3">
-                                    <label for="category_ids" class="form-label">Danh mục</label>
-                                    <select class="form-select @error('category_ids') is-invalid @enderror" 
-                                        id="category_ids" name="category_ids[]" multiple required>
+                                    <label for="category_id" class="form-label">Danh mục</label>
+                                    <select class="form-select @error('category_id') is-invalid @enderror" 
+                                        id="category_id" name="category_id" required>
+                                        <option value="">Chọn danh mục</option>
                                         @foreach($categories as $category)
                                             <option value="{{ $category->category_id }}" 
-                                                {{ in_array($category->category_id, old('category_ids', $examBank->categories->pluck('category_id')->toArray())) ? 'selected' : '' }}>
+                                                {{ $examBank->category_id == $category->category_id ? 'selected' : '' }}>
                                                 {{ $category->name }}
                                             </option>
                                         @endforeach
                                     </select>
-                                    @error('category_ids')
+                                    @error('category_id')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-                                
+
                                 <div class="mb-3">
                                     <label for="description" class="form-label">Mô tả</label>
                                     <textarea class="form-control @error('description') is-invalid @enderror" 
@@ -54,28 +55,15 @@
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
-                            </div>
-                            
-                            <div class="col-md-6">
+
                                 <div class="mb-3">
-                                    <label for="difficulty_level" class="form-label">Độ khó</label>
-                                    <select class="form-select @error('difficulty_level') is-invalid @enderror" 
-                                        id="difficulty_level" name="difficulty_level" required>
-                                        <option value="">Chọn độ khó</option>
-                                        <option value="easy" {{ old('difficulty_level', $examBank->difficulty_level) == 'easy' ? 'selected' : '' }}>Dễ</option>
-                                        <option value="medium" {{ old('difficulty_level', $examBank->difficulty_level) == 'medium' ? 'selected' : '' }}>Trung bình</option>
-                                        <option value="hard" {{ old('difficulty_level', $examBank->difficulty_level) == 'hard' ? 'selected' : '' }}>Khó</option>
+                                    <label for="is_active" class="form-label">Trạng thái</label>
+                                    <select class="form-select @error('is_active') is-invalid @enderror" 
+                                        id="is_active" name="is_active" required>
+                                        <option value="1" {{ $examBank->is_active == 1 ? 'selected' : '' }}>Kích hoạt</option>
+                                        <option value="0" {{ $examBank->is_active == 0 ? 'selected' : '' }}>Vô hiệu hóa</option>
                                     </select>
-                                    @error('difficulty_level')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="total_questions" class="form-label">Số câu hỏi</label>
-                                    <input type="number" class="form-control @error('total_questions') is-invalid @enderror" 
-                                        id="total_questions" name="total_questions" value="{{ old('total_questions', $examBank->total_questions) }}" min="1" required readonly>
-                                    @error('total_questions')
+                                    @error('is_active')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -91,7 +79,6 @@
                                             <tr>
                                                 <th>STT</th>
                                                 <th>Câu hỏi</th>
-                                                <th>Độ khó</th>
                                                 <th>Thao tác</th>
                                             </tr>
                                         </thead>
@@ -100,11 +87,6 @@
                                             <tr data-question-id="{{ $question->id }}">
                                                 <td class="question-number"></td>
                                                 <td>{{ $question->question_text }}</td>
-                                                <td>
-                                                    <span class="badge bg-{{ $question->difficulty_level === 'easy' ? 'success' : ($question->difficulty_level === 'medium' ? 'warning' : 'danger') }}">
-                                                        {{ ucfirst($question->difficulty_level) }}
-                                                    </span>
-                                                </td>
                                                 <td>
                                                     <button type="button" class="btn btn-danger btn-sm remove-question">
                                                         <i class="fas fa-trash"></i>
@@ -139,24 +121,18 @@
                                                     <input type="checkbox" id="select-all">
                                                 </th>
                                                 <th>Câu hỏi</th>
-                                                <th>Độ khó</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             @foreach($questions as $question)
                                             <tr>
                                                 <td>
-                                                    <input type="checkbox" name="existing_questions[]" 
+                                                    <input type="checkbox" name="questions[]" 
                                                         value="{{ $question->id }}" 
                                                         class="question-checkbox"
                                                         {{ in_array($question->id, $examBank->questions->pluck('id')->toArray()) ? 'checked' : '' }}>
                                                 </td>
                                                 <td>{{ $question->question_text }}</td>
-                                                <td>
-                                                    <span class="badge bg-{{ $question->difficulty_level === 'easy' ? 'success' : ($question->difficulty_level === 'medium' ? 'warning' : 'danger') }}">
-                                                        {{ ucfirst($question->difficulty_level) }}
-                                                    </span>
-                                                </td>
                                             </tr>
                                             @endforeach
                                         </tbody>
@@ -200,7 +176,6 @@
                             <li>option_c: Đáp án C</li>
                             <li>option_d: Đáp án D</li>
                             <li>correct_answer: Đáp án đúng (A, B, C, D)</li>
-                            <li>difficulty_level: Độ khó (easy, medium, hard)</li>
                             <li>explanation: Giải thích (không bắt buộc)</li>
                         </ul>
                         <p class="mt-2 mb-0">
@@ -232,21 +207,13 @@
         const importForm = document.getElementById('importForm');
         const examBankForm = document.getElementById('examBankForm');
         const addNewQuestionBtn = document.getElementById('addNewQuestion');
-        const totalQuestionsInput = document.getElementById('total_questions');
         let newQuestionCount = 0;
         let isSubmitting = false;
-
-        // Hàm cập nhật tổng số câu hỏi
-        function updateTotalQuestions() {
-            const totalQuestions = selectedQuestionsTable.querySelectorAll('tbody tr').length;
-            totalQuestionsInput.value = totalQuestions;
-        }
 
         // Khởi tạo selectedQuestions từ các câu hỏi đã chọn
         document.querySelectorAll('#selectedQuestionsTable tr[data-question-id]').forEach(row => {
             selectedQuestions.add(row.dataset.questionId);
         });
-        updateTotalQuestions();
 
         // Xử lý nút thêm dòng câu hỏi mới
         if (addNewQuestionBtn) {
@@ -286,21 +253,10 @@
                                     <option value="D">D</option>
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-2">
-                                <select class="form-select" name="new_questions[${questionId}][difficulty_level]" required>
-                                    <option value="">Chọn độ khó</option>
-                                    <option value="easy">Dễ</option>
-                                    <option value="medium">Trung bình</option>
-                                    <option value="hard">Khó</option>
-                                </select>
-                            </div>
                         </div>
                         <div class="mb-2">
                             <textarea class="form-control" name="new_questions[${questionId}][explanation]" rows="2" placeholder="Giải thích đáp án (không bắt buộc)"></textarea>
                         </div>
-                    </td>
-                    <td>
-                        <span class="badge bg-secondary">Mới</span>
                     </td>
                     <td>
                         <button type="button" class="btn btn-danger btn-sm remove-question">
@@ -312,7 +268,6 @@
                 tbody.appendChild(newRow);
                 selectedQuestions.add(questionId);
                 updateQuestionNumbers();
-                updateTotalQuestions();
             });
         }
 
@@ -342,16 +297,11 @@
                                 const newRow = document.createElement('tr');
                                 newRow.innerHTML = `
                                     <td>
-                                        <input type="checkbox" name="existing_questions[]" 
+                                        <input type="checkbox" name="questions[]" 
                                             value="${question.id}" 
                                             class="question-checkbox">
                                     </td>
                                     <td>${question.question_text}</td>
-                                    <td>
-                                        <span class="badge bg-${question.difficulty_level === 'easy' ? 'success' : (question.difficulty_level === 'medium' ? 'warning' : 'danger')}">
-                                            ${question.difficulty_level.charAt(0).toUpperCase() + question.difficulty_level.slice(1)}
-                                        </span>
-                                    </td>
                                 `;
                                 questionsTable.appendChild(newRow);
                                 
@@ -366,7 +316,6 @@
                                         removeQuestionFromTable(this.value);
                                     }
                                     updateQuestionNumbers();
-                                    updateTotalQuestions();
                                 });
 
                                 // Tự động chọn và thêm vào bảng câu hỏi đã chọn
@@ -383,9 +332,8 @@
                         // Hiển thị thông báo thành công
                         alert('Import câu hỏi thành công!');
 
-                        // Cập nhật lại số thứ tự và tổng số câu hỏi
+                        // Cập nhật lại số thứ tự
                         updateQuestionNumbers();
-                        updateTotalQuestions();
                     } else {
                         alert('Có lỗi xảy ra: ' + data.message);
                     }
@@ -410,7 +358,6 @@
                 }
             });
             updateQuestionNumbers();
-            updateTotalQuestions();
         });
 
         // Xử lý chọn từng câu hỏi
@@ -424,7 +371,6 @@
                     removeQuestionFromTable(this.value);
                 }
                 updateQuestionNumbers();
-                updateTotalQuestions();
             });
         });
 
@@ -442,7 +388,6 @@
                     checkbox.checked = false;
                 }
                 updateQuestionNumbers();
-                updateTotalQuestions();
             }
         });
 
@@ -450,8 +395,6 @@
         function addQuestionToTable(checkbox) {
             const row = checkbox.closest('tr');
             const questionText = row.cells[1].textContent;
-            const difficultyLevel = row.cells[2].querySelector('.badge').textContent;
-            const difficultyClass = row.cells[2].querySelector('.badge').className;
             
             // Xóa câu hỏi cũ nếu đã tồn tại
             removeQuestionFromTable(checkbox.value);
@@ -462,7 +405,6 @@
             newRow.innerHTML = `
                 <td class="question-number"></td>
                 <td>${questionText}</td>
-                <td><span class="${difficultyClass}">${difficultyLevel}</span></td>
                 <td>
                     <button type="button" class="btn btn-danger btn-sm remove-question">
                         <i class="fas fa-trash"></i>
@@ -471,7 +413,6 @@
             `;
             selectedQuestionsTable.querySelector('tbody').appendChild(newRow);
             updateQuestionNumbers();
-            updateTotalQuestions();
         }
 
         // Xóa câu hỏi khỏi bảng
@@ -480,7 +421,6 @@
             if (row) {
                 row.remove();
                 updateQuestionNumbers();
-                updateTotalQuestions();
             }
         }
 
@@ -495,42 +435,16 @@
             });
         }
 
-        // Xử lý khi submit form
+        // Existing form submit handler...
         if (examBankForm) {
             examBankForm.addEventListener('submit', function(e) {
-                if (isSubmitting) return;
-                e.preventDefault();
-                
-                // Kiểm tra danh mục
-                const categorySelect = document.getElementById('category_ids');
-                if (!categorySelect.value) {
-                    alert('Vui lòng chọn danh mục!');
-                    return;
-                }
-
-                // Lấy danh sách câu hỏi đã chọn
-                const existingQuestions = Array.from(document.querySelectorAll('input[name="existing_questions[]"]:checked')).map(cb => cb.value);
-                
-                // Xóa tất cả input hidden cũ của existing_questions nếu có
-                document.querySelectorAll('input[name="existing_questions[]"][type="hidden"]').forEach(el => el.remove());
-                
-                // Thêm input hidden để gửi danh sách câu hỏi
-                existingQuestions.forEach(questionId => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'existing_questions[]';
-                    input.value = questionId;
-                    examBankForm.appendChild(input);
-                });
-
-                isSubmitting = true;
-                examBankForm.submit();
+                console.log('Form submitted');
+                console.log('Form data:', new FormData(this));
             });
         }
 
         // Cập nhật số thứ tự ban đầu
         updateQuestionNumbers();
-        updateTotalQuestions();
     });
 </script>
 @endpush

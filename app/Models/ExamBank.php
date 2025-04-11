@@ -31,9 +31,10 @@ class ExamBank extends Model
         'time_limit' => 'integer'
     ];
 
-    public function questions(): HasMany
+    public function questions()
     {
-        return $this->hasMany(Question::class, 'exam_bank_id', 'bank_id');
+        return $this->belongsToMany(Question::class, 'exam_bank_questions', 'bank_id', 'question_id')
+                    ->withTimestamps();
     }
 
     public function categories(): BelongsToMany
