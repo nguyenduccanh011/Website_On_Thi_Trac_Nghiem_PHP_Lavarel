@@ -111,7 +111,7 @@ class AdminExamController extends Controller
             'description' => 'nullable|string',
             'duration' => 'required|integer|min:1',
             'total_marks' => 'required|integer|min:1',
-            'category_id' => 'required|exists:exam_categories,category_id',
+            'category_id' => 'required|exists:categories,category_id',
             'is_active' => 'boolean'
         ]);
 

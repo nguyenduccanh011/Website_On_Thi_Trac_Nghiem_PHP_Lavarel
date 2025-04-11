@@ -59,11 +59,12 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('leaderboard.index') }}">Bảng Xếp Hạng</a>
                         </li>
-                        <!-- // Chuyển hướng đến trang admin nếu người dùng là admin -->
-                        
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('admin.dashboard') }}">Trang admin</a>
-                        </li>
+                        <!-- Chỉ hiển thị nút admin cho người dùng có role là admin -->
+                        @if(Auth::check() && Auth::user()->role === 'admin')
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('admin.dashboard') }}">Trang admin</a>
+                            </li>
+                        @endif
                     @endauth
                 </ul>
                 <ul class="navbar-nav">

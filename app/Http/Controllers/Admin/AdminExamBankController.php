@@ -11,8 +11,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
-use App\Imports\QuestionsImport;
-use Maatwebsite\Excel\Facades\Excel;
 
 class AdminExamBankController extends Controller
 {
@@ -331,47 +329,39 @@ class AdminExamBankController extends Controller
             $file = $request->file('file');
             $handle = fopen($file->getPathname(), 'r');
             
-            // Đọc dòng tiêu đề và chuẩn hóa
+            // Đọc dòng tiêu đề
             $header = fgetcsv($handle);
             
-            // Xử lý BOM và chuẩn hóa header
-            $header = array_map(function($value) {
-                $value = preg_replace('/[\x{FEFF}\x{200B}]/u', '', $value);
-                return strtolower(trim($value));
-            }, $header);
-            
             // Kiểm tra các cột bắt buộc
-            $requiredColumns = ['name', 'description', 'is_active'];
+            $requiredColumns = ['question_text', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_answer', 'difficulty_level'];
             $missingColumns = array_diff($requiredColumns, $header);
             
             if (!empty($missingColumns)) {
                 fclose($handle);
-                return back()->with('error', 'File CSV thiếu các cột bắt buộc: ' . implode(', ', $missingColumns) . '. Các cột hiện có: ' . implode(', ', $header));
+                return back()->with('error', 'File CSV thiếu các cột bắt buộc: ' . implode(', ', $missingColumns));
             }
 
-            // Đọc dữ liệu
-            $examBanks = [];
+            $questions = [];
             $rowNumber = 2; // Bắt đầu từ dòng 2 (sau header)
             
             while (($data = fgetcsv($handle)) !== false) {
-                // Chuẩn hóa dữ liệu
-                $data = array_map(function($value) {
-                    $value = preg_replace('/[\x{FEFF}\x{200B}]/u', '', $value);
-                    return trim($value);
-                }, $data);
-                
                 $row = array_combine($header, $data);
                 
                 // Kiểm tra dữ liệu bắt buộc
-                if (empty($row['name'])) {
+                if (empty($row['question_text'])) {
                     $rowNumber++;
                     continue;
                 }
 
-                $examBanks[] = [
-                    'name' => $row['name'],
-                    'description' => $row['description'] ?? null,
-                    'is_active' => (bool)$row['is_active'],
+                $questions[] = [
+                    'question_text' => $row['question_text'],
+                    'option_a' => $row['option_a'],
+                    'option_b' => $row['option_b'],
+                    'option_c' => $row['option_c'],
+                    'option_d' => $row['option_d'],
+                    'correct_answer' => strtoupper($row['correct_answer']),
+                    'difficulty_level' => strtolower($row['difficulty_level']),
+                    'explanation' => $row['explanation'] ?? null,
                     'created_at' => now(),
                     'updated_at' => now()
                 ];
@@ -381,27 +371,59 @@ class AdminExamBankController extends Controller
             
             fclose($handle);
 
-            if (empty($examBanks)) {
+            if (empty($questions)) {
                 return back()->with('error', 'Không tìm thấy dữ liệu hợp lệ trong file CSV');
             }
 
-            // Import dữ liệu
-            ExamBank::insert($examBanks);
+            Question::insert($questions);
             
-            return back()->with('success', 'Import ngân hàng đề thi thành công!');
+            return back()->with('success', 'Import câu hỏi thành công!');
         } catch (\Exception $e) {
+            Log::error('Import exam bank error: ' . $e->getMessage());
             return back()->with('error', 'Có lỗi xảy ra khi import: ' . $e->getMessage());
         }
     }
 
     public function downloadTemplate()
     {
-        $filePath = public_path('templates/questions_template.csv');
-        
-        if (!file_exists($filePath)) {
-            return back()->with('error', 'Template file not found.');
-        }
-        
-        return response()->download($filePath, 'questions_template.csv');
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="questions_template.csv"',
+        ];
+
+        $callback = function() {
+            $file = fopen('php://output', 'w');
+            
+            // Add UTF-8 BOM
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            
+            // Add headers
+            fputcsv($file, [
+                'question_text',
+                'option_a',
+                'option_b',
+                'option_c',
+                'option_d',
+                'correct_answer',
+                'difficulty_level',
+                'explanation'
+            ]);
+            
+            // Add example data
+            fputcsv($file, [
+                'What is PHP?',
+                'Hypertext Preprocessor',
+                'Personal Home Page',
+                'Programming Home Protocol',
+                'None of these',
+                'A',
+                'easy',
+                'PHP is a server-side scripting language'
+            ]);
+            
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 } 
