@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('exam_bank_categories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('bank_id')->references('bank_id')->on('exam_banks')->onDelete('cascade');
+            $table->foreignId('bank_id')->constrained('exam_banks', 'bank_id')->onDelete('cascade');
             $table->foreignId('category_id')->references('category_id')->on('categories')->onDelete('cascade');
             $table->timestamps();
         });

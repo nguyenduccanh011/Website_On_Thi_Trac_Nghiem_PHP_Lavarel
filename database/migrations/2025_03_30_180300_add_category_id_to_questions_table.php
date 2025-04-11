@@ -9,7 +9,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('questions', function (Blueprint $table) {
-            $table->foreignId('category_id')->nullable()->after('exam_bank_id')
+            $table->foreignId('category_id')->nullable()->after('id')
                   ->references('category_id')->on('categories')->onDelete('set null');
         });
     }

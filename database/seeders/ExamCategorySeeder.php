@@ -10,6 +10,15 @@ class ExamCategorySeeder extends Seeder
 {
     public function run()
     {
+        // Tắt kiểm tra khóa ngoại tạm thời
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        
+        // Xóa tất cả dữ liệu cũ trong bảng
+        DB::table('categories')->truncate();
+        
+        // Bật lại kiểm tra khóa ngoại
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
         DB::table('categories')->insert([
             [
                 'category_id' => 1,

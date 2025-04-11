@@ -37,7 +37,7 @@
                                         <option value="">Chọn danh mục</option>
                                         @foreach($categories as $category)
                                             <option value="{{ $category->category_id }}" 
-                                                {{ $examBank->category_id == $category->category_id ? 'selected' : '' }}>
+                                                {{ old('category_id', $examBank->categories->first()->category_id ?? '') == $category->category_id ? 'selected' : '' }}>
                                                 {{ $category->name }}
                                             </option>
                                         @endforeach
@@ -54,6 +54,12 @@
                                     @error('description')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="total_questions" class="form-label">Tổng số câu hỏi</label>
+                                    <input type="number" class="form-control" id="total_questions" name="total_questions" 
+                                        value="{{ old('total_questions', $examBank->questions->count()) }}" readonly>
                                 </div>
 
                                 <div class="mb-3">
@@ -79,6 +85,7 @@
                                             <tr>
                                                 <th>STT</th>
                                                 <th>Câu hỏi</th>
+                                                <th>Độ khó</th>
                                                 <th>Thao tác</th>
                                             </tr>
                                         </thead>
@@ -87,6 +94,11 @@
                                             <tr data-question-id="{{ $question->id }}">
                                                 <td class="question-number"></td>
                                                 <td>{{ $question->question_text }}</td>
+                                                <td>
+                                                    <span class="badge bg-{{ $question->difficulty_level === 'easy' ? 'success' : ($question->difficulty_level === 'medium' ? 'warning' : 'danger') }}">
+                                                        {{ ucfirst($question->difficulty_level) }}
+                                                    </span>
+                                                </td>
                                                 <td>
                                                     <button type="button" class="btn btn-danger btn-sm remove-question">
                                                         <i class="fas fa-trash"></i>
@@ -121,6 +133,7 @@
                                                     <input type="checkbox" id="select-all">
                                                 </th>
                                                 <th>Câu hỏi</th>
+                                                <th>Độ khó</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -133,6 +146,11 @@
                                                         {{ in_array($question->id, $examBank->questions->pluck('id')->toArray()) ? 'checked' : '' }}>
                                                 </td>
                                                 <td>{{ $question->question_text }}</td>
+                                                <td>
+                                                    <span class="badge bg-{{ $question->difficulty_level === 'easy' ? 'success' : ($question->difficulty_level === 'medium' ? 'warning' : 'danger') }}">
+                                                        {{ ucfirst($question->difficulty_level) }}
+                                                    </span>
+                                                </td>
                                             </tr>
                                             @endforeach
                                         </tbody>
@@ -207,6 +225,7 @@
         const importForm = document.getElementById('importForm');
         const examBankForm = document.getElementById('examBankForm');
         const addNewQuestionBtn = document.getElementById('addNewQuestion');
+        const totalQuestionsInput = document.getElementById('total_questions');
         let newQuestionCount = 0;
         let isSubmitting = false;
 
@@ -253,10 +272,21 @@
                                     <option value="D">D</option>
                                 </select>
                             </div>
+                            <div class="col-md-6 mb-2">
+                                <select class="form-select" name="new_questions[${questionId}][difficulty_level]" required>
+                                    <option value="">Chọn độ khó</option>
+                                    <option value="easy">Dễ</option>
+                                    <option value="medium">Trung bình</option>
+                                    <option value="hard">Khó</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="mb-2">
                             <textarea class="form-control" name="new_questions[${questionId}][explanation]" rows="2" placeholder="Giải thích đáp án (không bắt buộc)"></textarea>
                         </div>
+                    </td>
+                    <td>
+                        <span class="badge bg-warning">Medium</span>
                     </td>
                     <td>
                         <button type="button" class="btn btn-danger btn-sm remove-question">
@@ -268,6 +298,7 @@
                 tbody.appendChild(newRow);
                 selectedQuestions.add(questionId);
                 updateQuestionNumbers();
+                updateTotalQuestions();
             });
         }
 
@@ -302,6 +333,11 @@
                                             class="question-checkbox">
                                     </td>
                                     <td>${question.question_text}</td>
+                                    <td>
+                                        <span class="badge bg-${question.difficulty_level === 'easy' ? 'success' : (question.difficulty_level === 'medium' ? 'warning' : 'danger')}">
+                                            ${question.difficulty_level.charAt(0).toUpperCase() + question.difficulty_level.slice(1)}
+                                        </span>
+                                    </td>
                                 `;
                                 questionsTable.appendChild(newRow);
                                 
@@ -309,19 +345,24 @@
                                 const checkbox = newRow.querySelector('.question-checkbox');
                                 checkbox.addEventListener('change', function() {
                                     if (this.checked) {
-                                        selectedQuestions.add(this.value);
-                                        addQuestionToTable(this);
+                                        if (!selectedQuestions.has(this.value)) {
+                                            selectedQuestions.add(this.value);
+                                            addQuestionToTable(this);
+                                        }
                                     } else {
                                         selectedQuestions.delete(this.value);
                                         removeQuestionFromTable(this.value);
                                     }
                                     updateQuestionNumbers();
+                                    updateTotalQuestions();
                                 });
 
                                 // Tự động chọn và thêm vào bảng câu hỏi đã chọn
                                 checkbox.checked = true;
-                                selectedQuestions.add(question.id);
-                                addQuestionToTable(checkbox);
+                                if (!selectedQuestions.has(question.id)) {
+                                    selectedQuestions.add(question.id);
+                                    addQuestionToTable(checkbox);
+                                }
                             }
                         });
                         
@@ -332,8 +373,9 @@
                         // Hiển thị thông báo thành công
                         alert('Import câu hỏi thành công!');
 
-                        // Cập nhật lại số thứ tự
+                        // Cập nhật lại số thứ tự và tổng số câu hỏi
                         updateQuestionNumbers();
+                        updateTotalQuestions();
                     } else {
                         alert('Có lỗi xảy ra: ' + data.message);
                     }
@@ -350,27 +392,33 @@
             questionCheckboxes.forEach(checkbox => {
                 checkbox.checked = this.checked;
                 if (this.checked) {
-                    selectedQuestions.add(checkbox.value);
-                    addQuestionToTable(checkbox);
+                    if (!selectedQuestions.has(checkbox.value)) {
+                        selectedQuestions.add(checkbox.value);
+                        addQuestionToTable(checkbox);
+                    }
                 } else {
                     selectedQuestions.delete(checkbox.value);
                     removeQuestionFromTable(checkbox.value);
                 }
             });
             updateQuestionNumbers();
+            updateTotalQuestions();
         });
 
         // Xử lý chọn từng câu hỏi
         questionCheckboxes.forEach(checkbox => {
             checkbox.addEventListener('change', function() {
                 if (this.checked) {
-                    selectedQuestions.add(this.value);
-                    addQuestionToTable(this);
+                    if (!selectedQuestions.has(this.value)) {
+                        selectedQuestions.add(this.value);
+                        addQuestionToTable(this);
+                    }
                 } else {
                     selectedQuestions.delete(this.value);
                     removeQuestionFromTable(this.value);
                 }
                 updateQuestionNumbers();
+                updateTotalQuestions();
             });
         });
 
@@ -388,6 +436,7 @@
                     checkbox.checked = false;
                 }
                 updateQuestionNumbers();
+                updateTotalQuestions();
             }
         });
 
@@ -395,9 +444,14 @@
         function addQuestionToTable(checkbox) {
             const row = checkbox.closest('tr');
             const questionText = row.cells[1].textContent;
+            const difficultyLevel = row.cells[2].querySelector('.badge').textContent;
+            const difficultyClass = row.cells[2].querySelector('.badge').className;
             
-            // Xóa câu hỏi cũ nếu đã tồn tại
-            removeQuestionFromTable(checkbox.value);
+            // Kiểm tra xem câu hỏi đã tồn tại trong bảng chưa
+            const existingRow = document.querySelector(`#selectedQuestionsTable tr[data-question-id="${checkbox.value}"]`);
+            if (existingRow) {
+                return; // Nếu đã tồn tại thì không thêm nữa
+            }
             
             // Thêm câu hỏi mới
             const newRow = document.createElement('tr');
@@ -405,6 +459,7 @@
             newRow.innerHTML = `
                 <td class="question-number"></td>
                 <td>${questionText}</td>
+                <td><span class="${difficultyClass}">${difficultyLevel}</span></td>
                 <td>
                     <button type="button" class="btn btn-danger btn-sm remove-question">
                         <i class="fas fa-trash"></i>
@@ -413,6 +468,7 @@
             `;
             selectedQuestionsTable.querySelector('tbody').appendChild(newRow);
             updateQuestionNumbers();
+            updateTotalQuestions();
         }
 
         // Xóa câu hỏi khỏi bảng
@@ -421,6 +477,7 @@
             if (row) {
                 row.remove();
                 updateQuestionNumbers();
+                updateTotalQuestions();
             }
         }
 
@@ -435,16 +492,54 @@
             });
         }
 
-        // Existing form submit handler...
+        // Cập nhật tổng số câu hỏi
+        function updateTotalQuestions() {
+            const totalQuestions = selectedQuestionsTable.querySelectorAll('tbody tr').length;
+            totalQuestionsInput.value = totalQuestions;
+        }
+
+        // Xử lý khi submit form
         if (examBankForm) {
             examBankForm.addEventListener('submit', function(e) {
-                console.log('Form submitted');
-                console.log('Form data:', new FormData(this));
+                if (isSubmitting) return;
+                isSubmitting = true;
+                
+                // Kiểm tra danh mục
+                const categorySelect = document.getElementById('category_id');
+                if (!categorySelect.value) {
+                    alert('Vui lòng chọn danh mục!');
+                    isSubmitting = false;
+                    return;
+                }
+
+                // Lấy danh sách câu hỏi đã chọn từ bảng selectedQuestionsTable
+                const selectedQuestionIds = Array.from(selectedQuestionsTable.querySelectorAll('tbody tr'))
+                    .map(row => row.dataset.questionId)
+                    .filter(id => id); // Loại bỏ các id null hoặc undefined
+
+                // Xóa tất cả input hidden cũ của questions nếu có
+                document.querySelectorAll('input[name="questions[]"][type="hidden"]').forEach(el => el.remove());
+                
+                // Xóa tất cả checkbox của questions
+                document.querySelectorAll('input[name="questions[]"][type="checkbox"]').forEach(el => el.remove());
+                
+                // Thêm input hidden để gửi danh sách câu hỏi
+                selectedQuestionIds.forEach(questionId => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'questions[]';
+                    input.value = questionId;
+                    examBankForm.appendChild(input);
+                });
+
+                // Gửi form
+                this.submit();
             });
         }
 
-        // Cập nhật số thứ tự ban đầu
+        // Cập nhật số thứ tự và tổng số câu hỏi ban đầu
         updateQuestionNumbers();
+        updateTotalQuestions();
     });
 </script>
 @endpush

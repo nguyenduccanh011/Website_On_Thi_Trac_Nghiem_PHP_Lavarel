@@ -9,8 +9,8 @@ return new class extends Migration
     public function up()
     {
         Schema::table('questions', function (Blueprint $table) {
-            $table->unsignedBigInteger('exam_bank_id')->nullable()->after('id');
-            $table->foreign('exam_bank_id')->references('bank_id')->on('exam_banks')->onDelete('set null');
+            $table->foreignId('exam_bank_id')->nullable()->after('id')
+                  ->constrained('exam_banks', 'bank_id')->onDelete('set null');
         });
     }
 

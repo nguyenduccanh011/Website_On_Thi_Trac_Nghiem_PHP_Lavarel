@@ -17,7 +17,7 @@ class AdminExamBankController extends Controller
 {
     public function index()
     {
-        $examBanks = ExamBank::with('categories')->paginate(10);
+        $examBanks = ExamBank::with(['categories', 'questions'])->paginate(10);
         return view('admin.exam-banks.index', compact('examBanks'));
     }
 
@@ -30,63 +30,58 @@ class AdminExamBankController extends Controller
 
     public function store(Request $request)
     {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'category_id' => 'required|exists:categories,category_id',
+            'is_active' => 'boolean',
+            'questions' => 'nullable|array',
+            'questions.*' => 'exists:questions,id',
+            'new_questions' => 'nullable|array',
+            'new_questions.*.question_text' => 'required|string',
+            'new_questions.*.option_a' => 'required|string',
+            'new_questions.*.option_b' => 'required|string',
+            'new_questions.*.option_c' => 'required|string',
+            'new_questions.*.option_d' => 'required|string',
+            'new_questions.*.correct_answer' => 'required|in:A,B,C,D',
+            'new_questions.*.difficulty_level' => 'required|in:easy,medium,hard',
+            'new_questions.*.explanation' => 'nullable|string'
+        ]);
+
         try {
             DB::beginTransaction();
 
-            // Log dữ liệu đầu vào
-            Log::info('ExamBank store request data:', $request->all());
-
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'category_ids' => 'required|array',
-                'category_ids.*' => 'exists:categories,category_id',
-                'description' => 'nullable|string',
-                'difficulty_level' => 'required|in:easy,medium,hard',
-                'total_questions' => 'required|integer|min:1',
-                'new_questions' => 'nullable|array',
-                'new_questions.*.question_text' => 'required|string',
-                'new_questions.*.option_a' => 'required|string',
-                'new_questions.*.option_b' => 'required|string',
-                'new_questions.*.option_c' => 'required|string',
-                'new_questions.*.option_d' => 'required|string',
-                'new_questions.*.correct_answer' => 'required|in:A,B,C,D',
-                'new_questions.*.difficulty_level' => 'required|in:easy,medium,hard',
-                'new_questions.*.explanation' => 'nullable|string',
-                'existing_questions' => 'nullable|array',
-                'existing_questions.*' => 'exists:questions,id'
+            // Log request data
+            Log::info('Creating exam bank with data:', [
+                'name' => $validated['name'],
+                'category_id' => $validated['category_id'],
+                'questions' => $validated['questions'] ?? [],
+                'new_questions' => $validated['new_questions'] ?? []
             ]);
 
-            // Log dữ liệu đã validate
-            Log::info('ExamBank validated data:', $validated);
-
-            // Kiểm tra xem category_ids có tồn tại và có phần tử không
-            if (!isset($validated['category_ids']) || empty($validated['category_ids'])) {
-                throw new \Exception('Danh mục không được để trống');
+            // Tạo slug duy nhất
+            $baseSlug = Str::slug($validated['name']);
+            $slug = $baseSlug;
+            $counter = 1;
+            
+            while (ExamBank::where('slug', $slug)->exists()) {
+                $slug = $baseSlug . '-' . $counter;
+                $counter++;
             }
 
-            // Tạo ngân hàng câu hỏi mới
-            $examBankData = [
+            // Tạo ngân hàng đề mới
+            $examBank = ExamBank::create([
                 'name' => $validated['name'],
-                'slug' => Str::slug($validated['name']),
+                'slug' => $slug,
                 'description' => $validated['description'],
-                'difficulty_level' => $validated['difficulty_level'],
-                'total_questions' => $validated['total_questions'],
-                'category_id' => $validated['category_ids'][0] // Lấy category_id đầu tiên từ mảng
-            ];
+                'is_active' => $validated['is_active'] ?? true
+            ]);
 
-            // Log dữ liệu sẽ tạo
-            Log::info('ExamBank data to create:', $examBankData);
+            Log::info('Exam bank created:', ['bank_id' => $examBank->bank_id]);
 
-            // Kiểm tra xem category_id có tồn tại trong mảng $fillable không
-            Log::info('ExamBank fillable fields:', (new ExamBank)->getFillable());
-
-            $examBank = ExamBank::create($examBankData);
-
-            // Log kết quả tạo
-            Log::info('ExamBank created:', $examBank->toArray());
-
-            // Gán các danh mục cho ngân hàng
-            $examBank->categories()->attach($validated['category_ids']);
+            // Thêm danh mục cho ngân hàng đề
+            $examBank->categories()->attach($validated['category_id']);
+            Log::info('Category attached:', ['category_id' => $validated['category_id']]);
 
             // Thêm câu hỏi mới
             if (isset($validated['new_questions'])) {
@@ -99,34 +94,49 @@ class AdminExamBankController extends Controller
                         'option_d' => $questionData['option_d'],
                         'correct_answer' => $questionData['correct_answer'],
                         'difficulty_level' => $questionData['difficulty_level'],
-                        'explanation' => $questionData['explanation'] ?? null,
-                        'exam_bank_id' => $examBank->bank_id,
-                        'category_id' => $validated['category_ids'][0] // Thêm category_id cho câu hỏi
+                        'explanation' => $questionData['explanation'] ?? null
+                    ]);
+
+                    Log::info('New question created:', ['question_id' => $question->id]);
+
+                    // Thêm câu hỏi vào ngân hàng đề
+                    $examBank->questions()->attach($question->id);
+                    Log::info('New question attached to exam bank:', [
+                        'question_id' => $question->id,
+                        'bank_id' => $examBank->bank_id
                     ]);
                 }
             }
 
             // Thêm câu hỏi đã có
-            if (isset($validated['existing_questions']) && is_array($validated['existing_questions'])) {
-                foreach ($validated['existing_questions'] as $questionId) {
-                    Question::where('id', $questionId)->update([
-                        'exam_bank_id' => $examBank->bank_id,
-                        'category_id' => $validated['category_ids'][0] // Cập nhật category_id cho câu hỏi
-                    ]);
-                }
+            if (isset($validated['questions']) && is_array($validated['questions'])) {
+                $examBank->questions()->attach($validated['questions']);
+                Log::info('Existing questions attached to exam bank:', [
+                    'question_ids' => $validated['questions'],
+                    'bank_id' => $examBank->bank_id
+                ]);
             }
+
+            // Cập nhật tổng số câu hỏi
+            $examBank->updateTotalQuestions();
+            Log::info('Total questions updated:', [
+                'bank_id' => $examBank->bank_id,
+                'total_questions' => $examBank->total_questions
+            ]);
 
             DB::commit();
 
             return redirect()->route('admin.exam-banks.index')
-                ->with('success', 'Ngân hàng câu hỏi đã được tạo thành công.');
+                ->with('success', 'Ngân hàng đề đã được tạo thành công.');
         } catch (\Exception $e) {
             DB::rollBack();
-            // Log lỗi
-            Log::error('ExamBank creation error: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
+            Log::error('Error creating exam bank:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
             return back()->withInput()
-                ->with('error', 'Có lỗi xảy ra khi tạo ngân hàng câu hỏi: ' . $e->getMessage());
+                ->with('error', 'Có lỗi xảy ra khi tạo ngân hàng đề: ' . $e->getMessage());
         }
     }
 
@@ -144,7 +154,7 @@ class AdminExamBankController extends Controller
             // Log request data for debugging
             Log::info('Update ExamBank Request:', [
                 'request_data' => $request->all(),
-                'current_category_id' => $examBank->category_id
+                'current_categories' => $examBank->categories->pluck('category_id')->toArray()
             ]);
 
             $validated = $request->validate([
@@ -165,14 +175,19 @@ class AdminExamBankController extends Controller
             $examBank->update([
                 'name' => $validated['name'],
                 'description' => $validated['description'],
-                'is_active' => $validated['is_active'],
-                'category_id' => $validated['category_id']
+                'is_active' => $validated['is_active']
             ]);
+
+            // Cập nhật quan hệ many-to-many với categories
+            $examBank->categories()->sync([$validated['category_id']]);
 
             // Cập nhật quan hệ many-to-many với questions
             if (isset($validated['questions'])) {
                 $examBank->questions()->sync($validated['questions']);
             }
+
+            // Cập nhật tổng số câu hỏi
+            $examBank->updateTotalQuestions();
 
             DB::commit();
 
