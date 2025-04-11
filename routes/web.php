@@ -86,6 +86,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('exam-banks/import', [AdminExamBankController::class, 'import'])->name('exam-banks.import');
     Route::get('/exams/download-template', [AdminExamController::class, 'downloadTemplate'])->name('exams.download-template');
     Route::get('/exam-banks/download-template', [AdminExamBankController::class, 'downloadTemplate'])->name('exam-banks.download-template');
+    Route::post('/exam-banks/{examBank}/add-question', [AdminExamBankController::class, 'addQuestion'])->name('exam-banks.add-question');
+    Route::post('/exam-banks/{examBank}/import-questions', [AdminExamBankController::class, 'importQuestions'])->name('exam-banks.import-questions');
     
     // Quản lý ngân hàng câu hỏi
     Route::resource('exam-banks', AdminExamBankController::class);

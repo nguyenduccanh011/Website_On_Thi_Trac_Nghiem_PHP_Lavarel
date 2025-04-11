@@ -30,31 +30,20 @@ class AdminQuestionController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'question_text' => 'required|string',
-            'option_a' => 'required|string',
-            'option_b' => 'required|string',
-            'option_c' => 'required|string',
-            'option_d' => 'required|string',
+            'question_text' => 'required|string|max:1000',
+            'option_a' => 'required|string|max:255',
+            'option_b' => 'required|string|max:255',
+            'option_c' => 'required|string|max:255',
+            'option_d' => 'required|string|max:255',
             'correct_answer' => 'required|in:A,B,C,D',
+            'explanation' => 'nullable|string|max:1000',
             'difficulty_level' => 'required|in:easy,medium,hard',
-            'explanation' => 'nullable|string'
         ]);
 
-        $question = Question::create([
-            'question_text' => $validated['question_text'],
-            'option_a' => $validated['option_a'],
-            'option_b' => $validated['option_b'],
-            'option_c' => $validated['option_c'],
-            'option_d' => $validated['option_d'],
-            'correct_answer' => $validated['correct_answer'],
-            'difficulty_level' => $validated['difficulty_level'],
-            'explanation' => $validated['explanation']
-        ]);
+        Question::create($validated);
 
-        return response()->json([
-            'success' => true,
-            'question' => $question
-        ]);
+        return redirect()->route('admin.questions.index')
+            ->with('success', 'Câu hỏi đã được tạo thành công.');
     }
 
     public function edit(Question $question)
@@ -68,17 +57,14 @@ class AdminQuestionController extends Controller
     public function update(Request $request, Question $question)
     {
         $validated = $request->validate([
-            'question_text' => 'required|string',
-            'option_a' => 'required|string',
-            'option_b' => 'required|string',
-            'option_c' => 'required|string',
-            'option_d' => 'required|string',
+            'question_text' => 'required|string|max:1000',
+            'option_a' => 'required|string|max:255',
+            'option_b' => 'required|string|max:255',
+            'option_c' => 'required|string|max:255',
+            'option_d' => 'required|string|max:255',
             'correct_answer' => 'required|in:A,B,C,D',
-            'explanation' => 'nullable|string',
-            'exam_id' => 'nullable|exists:exams,id',
-            'exam_bank_id' => 'nullable|exists:exam_banks,id',
-            'category_id' => 'required|exists:categories,id',
-            'difficulty_level' => 'required|in:easy,medium,hard'
+            'explanation' => 'nullable|string|max:1000',
+            'difficulty_level' => 'required|in:easy,medium,hard',
         ]);
 
         $question->update($validated);

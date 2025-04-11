@@ -20,32 +20,6 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label for="exam_id" class="form-label">Đề Thi</label>
-                            <select class="form-select @error('exam_id') is-invalid @enderror" 
-                                    id="exam_id" name="exam_id" required>
-                                <option value="">Chọn Đề Thi</option>
-                                @foreach($exams as $exam)
-                                    <option value="{{ $exam->exam_id }}" 
-                                            {{ old('exam_id', $question->exam_id) == $exam->exam_id ? 'selected' : '' }}>
-                                        {{ $exam->title }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('exam_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="marks" class="form-label">Điểm</label>
-                            <input type="number" class="form-control @error('marks') is-invalid @enderror" 
-                                   id="marks" name="marks" value="{{ old('marks', $question->marks) }}" required>
-                            @error('marks')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="mb-3">
                             <label for="correct_answer" class="form-label">Đáp Án Đúng</label>
                             <select class="form-select @error('correct_answer') is-invalid @enderror" 
                                     id="correct_answer" name="correct_answer" required>
@@ -122,9 +96,23 @@
                     @enderror
                 </div>
 
+                <div class="mb-3">
+                    <label for="difficulty_level" class="form-label">Độ Khó</label>
+                    <select class="form-select @error('difficulty_level') is-invalid @enderror" 
+                            id="difficulty_level" name="difficulty_level" required>
+                        <option value="">Chọn Độ Khó</option>
+                        <option value="easy" {{ old('difficulty_level', $question->difficulty_level) == 'easy' ? 'selected' : '' }}>Dễ</option>
+                        <option value="medium" {{ old('difficulty_level', $question->difficulty_level) == 'medium' ? 'selected' : '' }}>Trung Bình</option>
+                        <option value="hard" {{ old('difficulty_level', $question->difficulty_level) == 'hard' ? 'selected' : '' }}>Khó</option>
+                    </select>
+                    @error('difficulty_level')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
                 <div class="text-end">
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Cập Nhật Câu Hỏi
+                        <i class="fas fa-save"></i> Lưu Thay Đổi
                     </button>
                 </div>
             </form>

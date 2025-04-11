@@ -19,23 +19,6 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label for="exam_bank_id" class="form-label">Ngân Hàng Câu Hỏi</label>
-                            <select class="form-select @error('exam_bank_id') is-invalid @enderror" 
-                                    id="exam_bank_id" name="exam_bank_id">
-                                <option value="">Chọn Ngân Hàng</option>
-                                @foreach($examBanks as $bank)
-                                    <option value="{{ $bank->bank_id }}" {{ old('exam_bank_id') == $bank->bank_id ? 'selected' : '' }}>
-                                        {{ $bank->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('exam_bank_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-
-                        <div class="mb-3">
                             <label for="difficulty_level" class="form-label">Độ Khó</label>
                             <select class="form-select @error('difficulty_level') is-invalid @enderror" 
                                     id="difficulty_level" name="difficulty_level" required>

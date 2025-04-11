@@ -72,7 +72,7 @@
                         <div class="mb-3">
                             <label for="total_questions" class="form-label">Số Câu Hỏi</label>
                             <input type="number" class="form-control @error('total_questions') is-invalid @enderror" 
-                                        id="total_questions" name="total_questions" value="{{ old('total_questions') }}" min="1" required>
+                                        id="total_questions" name="total_questions" value="{{ old('total_questions') }}" min="1" required readonly>
                             @error('total_questions')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -213,8 +213,15 @@
         const importForm = document.getElementById('importForm');
         const examBankForm = document.getElementById('examBankForm');
         const addNewQuestionBtn = document.getElementById('addNewQuestion');
+        const totalQuestionsInput = document.getElementById('total_questions');
         let newQuestionCount = 0;
         let isSubmitting = false;
+
+        // Hàm cập nhật tổng số câu hỏi
+        function updateTotalQuestions() {
+            const totalQuestions = selectedQuestionsTable.querySelectorAll('tbody tr').length;
+            totalQuestionsInput.value = totalQuestions;
+        }
 
         // Xử lý nút thêm dòng câu hỏi mới
         if (addNewQuestionBtn) {
@@ -280,6 +287,7 @@
                 tbody.appendChild(newRow);
                 selectedQuestions.add(questionId);
                 updateQuestionNumbers();
+                updateTotalQuestions();
             });
         }
 
@@ -333,6 +341,7 @@
                                         removeQuestionFromTable(this.value);
                                     }
                                     updateQuestionNumbers();
+                                    updateTotalQuestions();
                                 });
 
                                 // Tự động chọn và thêm vào bảng câu hỏi đã chọn
@@ -349,8 +358,9 @@
                         // Hiển thị thông báo thành công
                         alert('Import câu hỏi thành công!');
 
-                        // Cập nhật lại số thứ tự
+                        // Cập nhật lại số thứ tự và tổng số câu hỏi
                         updateQuestionNumbers();
+                        updateTotalQuestions();
                     } else {
                         alert('Có lỗi xảy ra: ' + data.message);
                     }
@@ -375,6 +385,7 @@
                 }
             });
             updateQuestionNumbers();
+            updateTotalQuestions();
         });
 
         // Xử lý chọn từng câu hỏi
@@ -388,6 +399,7 @@
                     removeQuestionFromTable(this.value);
                 }
                 updateQuestionNumbers();
+                updateTotalQuestions();
             });
         });
 
@@ -405,6 +417,7 @@
                     checkbox.checked = false;
                 }
                 updateQuestionNumbers();
+                updateTotalQuestions();
             }
         });
 
@@ -433,6 +446,7 @@
             `;
             selectedQuestionsTable.querySelector('tbody').appendChild(newRow);
             updateQuestionNumbers();
+            updateTotalQuestions();
         }
 
         // Xóa câu hỏi khỏi bảng
@@ -441,6 +455,7 @@
             if (row) {
                 row.remove();
                 updateQuestionNumbers();
+                updateTotalQuestions();
             }
         }
 
@@ -458,6 +473,7 @@
         // Xử lý khi submit form
         if (examBankForm) {
             examBankForm.addEventListener('submit', function(e) {
+                if (isSubmitting) return;
                 e.preventDefault();
                 
                 // Kiểm tra danh mục
@@ -470,24 +486,26 @@
                 // Lấy danh sách câu hỏi đã chọn
                 const existingQuestions = Array.from(document.querySelectorAll('input[name="existing_questions[]"]:checked')).map(cb => cb.value);
                 
+                // Xóa tất cả input hidden cũ của existing_questions nếu có
+                document.querySelectorAll('input[name="existing_questions[]"][type="hidden"]').forEach(el => el.remove());
+                
                 // Thêm input hidden để gửi danh sách câu hỏi
-                if (existingQuestions.length > 0) {
-                    existingQuestions.forEach(questionId => {
-                        const input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = 'existing_questions[]';
-                        input.value = questionId;
-                        this.appendChild(input);
-                    });
-                }
+                existingQuestions.forEach(questionId => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'existing_questions[]';
+                    input.value = questionId;
+                    examBankForm.appendChild(input);
+                });
 
-                // Submit form
-                this.submit();
+                isSubmitting = true;
+                examBankForm.submit();
             });
         }
 
         // Cập nhật số thứ tự ban đầu
         updateQuestionNumbers();
+        updateTotalQuestions();
     });
 </script>
 @endpush
