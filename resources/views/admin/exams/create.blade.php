@@ -117,7 +117,10 @@
                         <div class="row mt-4">
                             <div class="col-12">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h5>Câu hỏi đã chọn</h5>
+                                    <div>
+                                        <h5 class="mb-0">Câu hỏi đã chọn (<span id="selectedQuestionCount">0</span> câu)</h5>
+                                        <small class="text-muted">Tổng số câu hỏi trong đề: <span id="totalQuestions">0</span> câu</small>
+                                    </div>
                                     <div>
                                         <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#importModal">
                                             <i class="fas fa-file-import"></i> Import Excel
@@ -246,46 +249,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const mediumCount = document.getElementById('medium_count');
     const hardCount = document.getElementById('hard_count');
     const getRandomQuestionsBtn = document.getElementById('getRandomQuestions');
-    const selectedQuestionsTable = document.getElementById('selectedQuestionsTable');
     const selectAllCheckbox = document.getElementById('select-all');
     const questionCheckboxes = document.querySelectorAll('.question-checkbox');
+    const selectedQuestionsTable = document.getElementById('selectedQuestionsTable');
     const selectedQuestions = new Set();
     const importForm = document.getElementById('importForm');
     const examForm = document.getElementById('examForm');
+    const addNewQuestionBtn = document.getElementById('addNewQuestion');
+    const totalQuestionsInput = document.getElementById('total_questions');
+    let newQuestionCount = 0;
+    let isSubmitting = false;
 
     // Khởi tạo selectedQuestions từ các câu hỏi đã chọn
-    document.querySelectorAll('.question-checkbox:checked').forEach(checkbox => {
-        selectedQuestions.add(checkbox.value);
-        addQuestionToTable(checkbox);
+    document.querySelectorAll('#selectedQuestionsTable tr[data-question-id]').forEach(row => {
+        selectedQuestions.add(row.dataset.questionId);
     });
-
-    // Xử lý sự kiện khi chọn/bỏ chọn câu hỏi
-    questionCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            const questionId = this.value;
-            if (this.checked) {
-                if (!selectedQuestions.has(questionId)) {
-                    selectedQuestions.add(questionId);
-                    addQuestionToTable(this);
-                }
-            } else {
-                selectedQuestions.delete(questionId);
-                removeQuestionFromTable(questionId);
-            }
-            updateQuestionNumbers();
-        });
-    });
-
-    // Xử lý chọn tất cả
-    if (selectAllCheckbox) {
-        selectAllCheckbox.addEventListener('change', function() {
-            questionCheckboxes.forEach(checkbox => {
-                checkbox.checked = this.checked;
-                const event = new Event('change');
-                checkbox.dispatchEvent(event);
-            });
-        });
-    }
 
     // Cập nhật số lượng câu hỏi có sẵn khi chọn ngân hàng đề
     examBankSelect.addEventListener('change', function() {
@@ -302,6 +280,65 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('easy_count').max = easyCount;
         document.getElementById('medium_count').max = mediumCount;
         document.getElementById('hard_count').max = hardCount;
+    });
+
+    // Xử lý khi submit form
+    if (examForm) {
+        examForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Kiểm tra danh mục
+            const categorySelect = document.getElementById('category_id');
+            if (!categorySelect.value) {
+                alert('Vui lòng chọn danh mục!');
+                return;
+            }
+
+            // Lấy tất cả câu hỏi đã chọn từ bảng
+            const selectedRows = selectedQuestionsTable.querySelectorAll('tbody tr');
+            
+            // Kiểm tra số lượng câu hỏi
+            if (selectedRows.length === 0) {
+                alert('Vui lòng thêm ít nhất một câu hỏi!');
+                return;
+            }
+
+            // Xóa tất cả input hidden cũ của questions
+            document.querySelectorAll('input[name="questions[]"]').forEach(el => el.remove());
+
+            // Thêm input hidden cho mỗi câu hỏi đã chọn
+            selectedRows.forEach(row => {
+                const questionId = row.dataset.questionId;
+                if (questionId) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'questions[]';
+                    input.value = questionId;
+                    examForm.appendChild(input);
+                }
+            });
+
+            // Debug: In ra số lượng input hidden
+            console.log('Number of hidden inputs:', document.querySelectorAll('input[name="questions[]"]').length);
+            console.log('Selected questions:', Array.from(document.querySelectorAll('input[name="questions[]"]')).map(input => input.value));
+
+            // Submit form bằng cách gọi submit() trực tiếp
+            e.target.submit();
+        });
+    }
+
+    // Xử lý chọn từng câu hỏi
+    questionCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            console.log('Checkbox changed:', this.value, this.checked);
+            if (this.checked) {
+                addQuestionToTable(this);
+            } else {
+                removeQuestionFromTable(this.value);
+            }
+            updateQuestionNumbers();
+            updateTotalQuestions();
+        });
     });
 
     // Xử lý lấy câu hỏi ngẫu nhiên
@@ -337,50 +374,42 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Lấy danh sách ID của các câu hỏi hiện có trong bảng
-                const existingQuestionIds = new Set();
-                $('#selectedQuestionsTable tbody tr').each(function() {
-                    existingQuestionIds.add($(this).data('question-id'));
-                });
-
                 // Thêm các câu hỏi mới vào bảng
                 data.questions.forEach(question => {
-                    // Nếu câu hỏi đã tồn tại, bỏ qua
-                    if (existingQuestionIds.has(question.id)) {
-                        return;
+                    if (!selectedQuestions.has(question.id)) {
+                        const tbody = selectedQuestionsTable.querySelector('tbody');
+                        const row = document.createElement('tr');
+                        row.dataset.questionId = question.id;
+                        
+                        row.innerHTML = `
+                            <td class="question-number"></td>
+                            <td>${question.question_text}</td>
+                            <td>
+                                <span class="badge bg-${question.difficulty_level === 'easy' ? 'success' : (question.difficulty_level === 'medium' ? 'warning' : 'danger')}">
+                                    ${question.difficulty_level.charAt(0).toUpperCase() + question.difficulty_level.slice(1)}
+                                </span>
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-danger btn-sm remove-question">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        `;
+                        
+                        tbody.appendChild(row);
+                        selectedQuestions.add(question.id);
+                        
+                        // Tích chọn checkbox tương ứng
+                        const checkbox = document.querySelector(`.question-checkbox[value="${question.id}"]`);
+                        if (checkbox) {
+                            checkbox.checked = true;
+                        }
                     }
-
-                    // Thêm vào bảng
-                    const tbody = selectedQuestionsTable.querySelector('tbody');
-                    const row = document.createElement('tr');
-                    row.dataset.questionId = question.id;
-                    
-                    row.innerHTML = `
-                        <td class="question-number"></td>
-                        <td>${question.question_text}</td>
-                        <td>
-                            <span class="badge bg-${question.difficulty_level === 'easy' ? 'success' : (question.difficulty_level === 'medium' ? 'warning' : 'danger')}">
-                                ${question.difficulty_level === 'easy' ? 'Dễ' : (question.difficulty_level === 'medium' ? 'Trung bình' : 'Khó')}
-                            </span>
-                        </td>
-                        <td>
-                            <button type="button" class="btn btn-danger btn-sm remove-question">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    `;
-                    
-                    tbody.appendChild(row);
-                    
-                    // Thêm vào selectedQuestions
-                    selectedQuestions.add(question.id);
-                    
-                    // Tích chọn checkbox tương ứng
-                    $(`input[name="questions[]"][value="${question.id}"]`).prop('checked', true);
                 });
 
-                // Cập nhật số thứ tự
                 updateQuestionNumbers();
+                updateTotalQuestions();
+                alert('Đã thêm câu hỏi ngẫu nhiên thành công!');
             } else {
                 alert('Có lỗi xảy ra: ' + data.message);
             }
@@ -391,38 +420,103 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Xử lý xóa câu hỏi
+    selectedQuestionsTable.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-question')) {
+            const row = e.target.closest('tr');
+            const questionId = row.dataset.questionId;
+            console.log('Remove button clicked for question:', questionId);
+            removeQuestionFromTable(questionId);
+        }
+    });
+
+    // Xử lý chọn tất cả
+    selectAllCheckbox.addEventListener('change', function() {
+        console.log('Select all changed:', this.checked);
+        questionCheckboxes.forEach(checkbox => {
+            if (checkbox.checked !== this.checked) {
+                checkbox.checked = this.checked;
+                if (this.checked) {
+                    addQuestionToTable(checkbox);
+                } else {
+                    removeQuestionFromTable(checkbox.value);
+                }
+            }
+        });
+        updateQuestionNumbers();
+        updateTotalQuestions();
+    });
+
     // Thêm câu hỏi vào bảng
-    function addQuestionToTable(question) {
-        const tbody = selectedQuestionsTable.querySelector('tbody');
-        const row = document.createElement('tr');
-        row.dataset.questionId = question.id || question.value;
+    function addQuestionToTable(checkbox) {
+        console.log('Adding question to table:', checkbox.value);
+        const row = checkbox.closest('tr');
+        const questionText = row.cells[1].textContent;
+        const difficultyBadge = row.cells[2].querySelector('.badge');
+        const difficultyLevel = difficultyBadge.textContent;
+        const difficultyClass = difficultyBadge.className;
         
-        row.innerHTML = `
+        // Kiểm tra xem câu hỏi đã tồn tại trong bảng chưa
+        const existingRow = selectedQuestionsTable.querySelector(`tr[data-question-id="${checkbox.value}"]`);
+        if (existingRow) {
+            console.log('Question already exists in table');
+            return; // Nếu đã tồn tại thì không thêm nữa
+        }
+        
+        // Thêm câu hỏi mới vào bảng
+        const tbody = selectedQuestionsTable.querySelector('tbody');
+        const newRow = document.createElement('tr');
+        newRow.dataset.questionId = checkbox.value;
+        newRow.innerHTML = `
             <td class="question-number"></td>
-            <td>${question.question_text || question.closest('tr').querySelector('td:nth-child(2)').textContent}</td>
-            <td>
-                <span class="badge bg-${question.difficulty_level === 'easy' ? 'success' : (question.difficulty_level === 'medium' ? 'warning' : 'danger')}">
-                    ${question.difficulty_level === 'easy' ? 'Dễ' : (question.difficulty_level === 'medium' ? 'Trung bình' : 'Khó')}
-                </span>
-            </td>
+            <td>${questionText}</td>
+            <td><span class="${difficultyClass}">${difficultyLevel}</span></td>
             <td>
                 <button type="button" class="btn btn-danger btn-sm remove-question">
                     <i class="fas fa-trash"></i>
                 </button>
             </td>
         `;
-        
-        tbody.appendChild(row);
+        tbody.appendChild(newRow);
+        selectedQuestions.add(checkbox.value);
+
+        // Thêm input hidden cho câu hỏi
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'questions[]';
+        input.value = checkbox.value;
+        examForm.appendChild(input);
+
+        console.log('Question added to table and input created');
+        console.log('Current hidden inputs:', document.querySelectorAll('input[name="questions[]"]').length);
     }
 
     // Xóa câu hỏi khỏi bảng
     function removeQuestionFromTable(questionId) {
-        const row = document.querySelector(`#selectedQuestionsTable tr[data-question-id="${questionId}"]`);
+        console.log('Removing question from table:', questionId);
+        const row = selectedQuestionsTable.querySelector(`tr[data-question-id="${questionId}"]`);
         if (row) {
-            row.remove();
+            // Xóa input hidden tương ứng
+            const input = document.querySelector(`input[name="questions[]"][value="${questionId}"]`);
+            if (input) {
+                input.remove();
+                console.log('Hidden input removed');
+            }
+            
+            // Xóa khỏi Set và bảng
             selectedQuestions.delete(questionId);
-            $(`input[name="questions[]"][value="${questionId}"]`).prop('checked', false);
+            row.remove();
+            
+            // Bỏ chọn checkbox tương ứng
+            const checkbox = document.querySelector(`.question-checkbox[value="${questionId}"]`);
+            if (checkbox) {
+                checkbox.checked = false;
+                console.log('Checkbox unchecked');
+            }
+            
             updateQuestionNumbers();
+            updateTotalQuestions();
+            console.log('Question fully removed');
         }
     }
 
@@ -430,22 +524,28 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateQuestionNumbers() {
         const rows = selectedQuestionsTable.querySelectorAll('tbody tr');
         rows.forEach((row, index) => {
-            row.querySelector('.question-number').textContent = index + 1;
+            const numberCell = row.querySelector('.question-number');
+            if (numberCell) {
+                numberCell.textContent = index + 1;
+            }
         });
+        // Cập nhật số câu hỏi đã chọn và tổng số câu hỏi
+        const totalQuestions = rows.length;
+        document.getElementById('selectedQuestionCount').textContent = totalQuestions;
+        document.getElementById('totalQuestions').textContent = totalQuestions;
     }
 
-    // Xử lý xóa câu hỏi
-    selectedQuestionsTable.addEventListener('click', function(e) {
-        if (e.target.closest('.remove-question')) {
-            const row = e.target.closest('tr');
-            const questionId = row.dataset.questionId;
-            selectedQuestions.delete(questionId);
-            row.remove();
-            // Bỏ chọn checkbox tương ứng trong phần câu hỏi đã có
-            $(`input[name="questions[]"][value="${questionId}"]`).prop('checked', false);
-            updateQuestionNumbers();
+    // Cập nhật tổng số câu hỏi
+    function updateTotalQuestions() {
+        const totalQuestions = selectedQuestionsTable.querySelectorAll('tbody tr').length;
+        if (totalQuestionsInput) {
+            totalQuestionsInput.value = totalQuestions;
         }
-    });
+    }
+
+    // Cập nhật số thứ tự và tổng số câu hỏi ban đầu
+    updateQuestionNumbers();
+    updateTotalQuestions();
 
     // Xử lý form import
     if (importForm) {
@@ -480,31 +580,33 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <td>${question.question_text}</td>
                                 <td>
                                     <span class="badge bg-${question.difficulty_level === 'easy' ? 'success' : (question.difficulty_level === 'medium' ? 'warning' : 'danger')}">
-                                        ${question.difficulty_level === 'easy' ? 'Dễ' : (question.difficulty_level === 'medium' ? 'Trung bình' : 'Khó')}
+                                        ${question.difficulty_level.charAt(0).toUpperCase() + question.difficulty_level.slice(1)}
                                     </span>
                                 </td>
                             `;
                             questionsTable.appendChild(newRow);
                             
-                            // Tự động chọn câu hỏi mới và thêm event listener
+                            // Thêm event listener cho checkbox mới
                             const checkbox = newRow.querySelector('.question-checkbox');
                             checkbox.addEventListener('change', function() {
                                 if (this.checked) {
-                                    selectedQuestions.add(this.value);
                                     addQuestionToTable(this);
                                 } else {
-                                    selectedQuestions.delete(this.value);
                                     removeQuestionFromTable(this.value);
                                 }
                                 updateQuestionNumbers();
+                                updateTotalQuestions();
                             });
 
                             // Tự động chọn và thêm vào bảng câu hỏi đã chọn
                             checkbox.checked = true;
-                            selectedQuestions.add(question.id);
-                            addQuestionToTable(question);
+                            addQuestionToTable(checkbox);
                         }
                     });
+                    
+                    // Cập nhật số thứ tự và tổng số câu hỏi sau khi import
+                    updateQuestionNumbers();
+                    updateTotalQuestions();
                     
                     // Đóng modal
                     const modal = bootstrap.Modal.getInstance(document.getElementById('importModal'));
@@ -512,9 +614,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Hiển thị thông báo thành công
                     alert('Import câu hỏi thành công!');
-
-                    // Cập nhật lại số thứ tự
-                    updateQuestionNumbers();
                 } else {
                     alert('Có lỗi xảy ra: ' + data.message);
                 }
@@ -525,93 +624,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-
-    // Xử lý submit form
-    examForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // Kiểm tra xem có câu hỏi nào được chọn không
-        if (selectedQuestions.size === 0) {
-            alert('Vui lòng chọn ít nhất một câu hỏi!');
-            return;
-        }
-        
-        // Thêm input hidden cho các câu hỏi đã chọn
-        selectedQuestions.forEach(questionId => {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'questions[]';
-            input.value = questionId;
-            examForm.appendChild(input);
-        });
-        
-        // Submit form
-        this.submit();
-    });
-
-    // Cập nhật số thứ tự ban đầu
-    updateQuestionNumbers();
 });
-
-function updateQuestionCounts() {
-    const bankId = $('#exam_bank_id').val();
-    if (!bankId) return;
-
-    $.ajax({
-        url: `/admin/exam-banks/${bankId}/random-questions`,
-        method: 'POST',
-        data: {
-            easy_count: $('#easy_count').val() || 0,
-            medium_count: $('#medium_count').val() || 0,
-            hard_count: $('#hard_count').val() || 0
-        },
-        success: function(response) {
-            if (response.success) {
-                // Lấy danh sách ID của các câu hỏi hiện có trong bảng
-                const existingQuestionIds = new Set();
-                $('#selectedQuestionsTable tbody tr').each(function() {
-                    existingQuestionIds.add($(this).data('question-id'));
-                });
-
-                // Thêm các câu hỏi mới vào bảng
-                response.questions.forEach((question, index) => {
-                    // Nếu câu hỏi đã tồn tại, bỏ qua
-                    if (existingQuestionIds.has(question.id)) {
-                        return;
-                    }
-
-                    const row = `
-                        <tr data-question-id="${question.id}">
-                            <td>${index + 1}</td>
-                            <td>${question.question_text}</td>
-                            <td>
-                                <span class="badge bg-${question.difficulty_level === 'easy' ? 'success' : (question.difficulty_level === 'medium' ? 'warning' : 'danger')}">
-                                    ${question.difficulty_level.charAt(0).toUpperCase() + question.difficulty_level.slice(1)}
-                                </span>
-                            </td>
-                            <td>
-                                <button type="button" class="btn btn-danger btn-sm remove-question">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                    $('#selectedQuestionsTable tbody').append(row);
-
-                    // Tích chọn checkbox tương ứng trong phần câu hỏi đã có
-                    $(`input[name="questions[]"][value="${question.id}"]`).prop('checked', true);
-                });
-
-                // Cập nhật số thứ tự và tổng số câu hỏi
-                updateQuestionNumbers();
-                $('#total_questions').val($('#selectedQuestionsTable tbody tr').length);
-            }
-        },
-        error: function(xhr) {
-            console.error('Error:', xhr);
-            alert('Có lỗi xảy ra khi lấy câu hỏi ngẫu nhiên.');
-        }
-    });
-}
 </script>
 @endpush 

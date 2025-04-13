@@ -9,6 +9,7 @@ use App\Models\Question;
 use App\Models\ExamBank;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AdminExamController extends Controller
 {
@@ -30,38 +31,59 @@ class AdminExamController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'category_id' => 'required|exists:categories,category_id',
-            'duration' => 'required|integer|min:1',
-            'questions' => 'required|array|min:1',
-            'questions.*' => 'exists:questions,id'
-        ]);
-
         try {
+            // Log request data for debugging
+            \Log::info('Exam creation request:', [
+                'all_data' => $request->all(),
+                'questions' => $request->input('questions', [])
+            ]);
+
+            // Validate the request
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'category_id' => 'required|exists:categories,category_id',
+                'duration' => 'required|integer|min:1',
+                'questions' => 'required|array|min:1',
+                'questions.*' => 'exists:questions,id'
+            ]);
+
             DB::beginTransaction();
 
             // Tạo đề thi mới
             $exam = Exam::create([
-                'title' => $request->title,
-                'description' => $request->description,
-                'category_id' => $request->category_id,
-                'duration' => $request->duration,
-                'total_marks' => count($request->questions) * 1, // Mỗi câu 1 điểm
-                'passing_marks' => ceil(count($request->questions) * 0.6), // 60% để đậu
+                'title' => $validated['title'],
+                'description' => $validated['description'],
+                'category_id' => $validated['category_id'],
+                'duration' => $validated['duration'],
+                'total_marks' => count($validated['questions']) * 1, // Mỗi câu 1 điểm
+                'passing_marks' => ceil(count($validated['questions']) * 0.6), // 60% để đậu
                 'is_active' => true
             ]);
 
             // Thêm câu hỏi vào đề thi
-            $exam->questions()->attach($request->questions);
+            if (!empty($validated['questions'])) {
+                $exam->questions()->attach($validated['questions']);
+            }
 
             DB::commit();
 
             return redirect()->route('admin.exams.index')
                 ->with('success', 'Đề thi đã được tạo thành công.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            \Log::error('Validation error:', [
+                'errors' => $e->errors(),
+                'request_data' => $request->all()
+            ]);
+            return back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Error creating exam:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
             return back()->withInput()
                 ->with('error', 'Có lỗi xảy ra khi tạo đề thi: ' . $e->getMessage());
         }
@@ -113,8 +135,11 @@ class AdminExamController extends Controller
         $categories = ExamCategory::all();
         $questions = Question::all();
         $examQuestions = $exam->questions()->pluck('questions.id')->toArray();
+        $examBanks = ExamBank::withCount(['questions' => function($query) {
+            $query->select(DB::raw('count(*)'));
+        }])->get();
         
-        return view('admin.exams.edit', compact('exam', 'categories', 'questions', 'examQuestions'));
+        return view('admin.exams.edit', compact('exam', 'categories', 'questions', 'examQuestions', 'examBanks'));
     }
 
     public function update(Request $request, Exam $exam)
