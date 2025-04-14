@@ -13,7 +13,9 @@ class DatabaseSeeder extends Seeder
             ExamCategorySeeder::class,
             ExamBankSeeder::class,
             QuestionSeeder::class,
+            ExamBankQuestionSeeder::class,
             ExamSeeder::class,
+            ExamQuestionSeeder::class,
         ]);
     }
 } 

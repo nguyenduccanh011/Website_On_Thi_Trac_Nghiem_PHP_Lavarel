@@ -47,15 +47,15 @@
                                             @endforeach
                                         </td>
                                         <td>
-                                            <span class="badge badge-{{ 
+                                            <span class="badge bg-{{ 
                                                 $question->difficulty_level === 'easy' ? 'success' : 
-                                                ($question->difficulty_level === 'medium' ? 'warning' : 'danger') 
+                                                ($question->difficulty_level === 'medium' ? 'warning text-dark' : 'danger') 
                                             }}">
                                                 {{ ucfirst($question->difficulty_level) }}
                                             </span>
                                         </td>
                                         <td>
-                                            <span class="badge badge-{{ $question->is_active ? 'success' : 'danger' }}">
+                                            <span class="badge bg-{{ $question->is_active ? 'success' : 'danger' }}">
                                                 {{ $question->is_active ? 'Hoạt động' : 'Không hoạt động' }}
                                             </span>
                                         </td>

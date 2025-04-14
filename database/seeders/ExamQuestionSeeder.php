@@ -20,8 +20,8 @@ class ExamQuestionSeeder extends Seeder
         
         // Liên kết câu hỏi với đề thi
         foreach ($exams as $exam) {
-            // Lấy ngẫu nhiên 3-5 câu hỏi cho mỗi đề thi
-            $randomQuestions = $questions->random(rand(3, 5));
+            // Lấy ngẫu nhiên 5-8 câu hỏi cho mỗi đề thi
+            $randomQuestions = $questions->random(rand(5, 8));
             
             $order = 1;
             foreach ($randomQuestions as $question) {
