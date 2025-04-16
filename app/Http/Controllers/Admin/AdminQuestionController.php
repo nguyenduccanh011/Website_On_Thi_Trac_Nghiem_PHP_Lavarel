@@ -76,30 +76,67 @@ class AdminQuestionController extends Controller
     public function destroy(Question $question)
     {
         $question->delete();
-        return response()->json([
-            'success' => true
-        ]);
+        return redirect()->route('admin.questions.index')
+            ->with('success', 'Câu hỏi đã được xóa thành công.');
     }
 
     public function import(Request $request)
     {
-        $request->validate([
-            'file' => 'required|mimes:csv,txt'
-        ]);
-
         try {
+            $request->validate([
+                'file' => 'required|mimes:csv,txt'
+            ]);
+
             $file = $request->file('file');
             $handle = fopen($file->getPathname(), 'r');
             
+            if (!$handle) {
+                throw new \Exception('Không thể mở file. Vui lòng kiểm tra lại file.');
+            }
+            
             // Đọc dòng header
             $header = fgetcsv($handle);
+            if (!$header) {
+                throw new \Exception('File không có dữ liệu hoặc không đúng định dạng.');
+            }
+            
             $header = array_map('strtolower', $header);
+            $requiredColumns = ['question_text', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_answer'];
+            
+            // Kiểm tra các cột bắt buộc
+            foreach ($requiredColumns as $column) {
+                if (!in_array($column, $header)) {
+                    throw new \Exception("Thiếu cột bắt buộc: {$column}");
+                }
+            }
             
             $importedQuestions = [];
+            $rowNumber = 1; // Bắt đầu từ 1 vì đã đọc header
             
             // Đọc từng dòng dữ liệu
             while (($data = fgetcsv($handle)) !== false) {
+                $rowNumber++;
+                
+                if (count($data) !== count($header)) {
+                    throw new \Exception("Dòng {$rowNumber} có số cột không khớp với header.");
+                }
+                
                 $row = array_combine($header, $data);
+                
+                // Validate dữ liệu
+                if (empty($row['question_text'])) {
+                    throw new \Exception("Dòng {$rowNumber}: Thiếu nội dung câu hỏi");
+                }
+                
+                if (empty($row['option_a']) || empty($row['option_b']) || 
+                    empty($row['option_c']) || empty($row['option_d'])) {
+                    throw new \Exception("Dòng {$rowNumber}: Thiếu đáp án");
+                }
+                
+                $correctAnswer = strtoupper(trim($row['correct_answer']));
+                if (!in_array($correctAnswer, ['A', 'B', 'C', 'D'])) {
+                    throw new \Exception("Dòng {$rowNumber}: Đáp án đúng phải là A, B, C hoặc D");
+                }
                 
                 // Tạo câu hỏi mới
                 $question = Question::create([
@@ -108,8 +145,8 @@ class AdminQuestionController extends Controller
                     'option_b' => $row['option_b'],
                     'option_c' => $row['option_c'],
                     'option_d' => $row['option_d'],
-                    'correct_answer' => strtoupper($row['correct_answer']),
-                    'difficulty_level' => $row['difficulty_level'],
+                    'correct_answer' => $correctAnswer,
+                    'difficulty_level' => $row['difficulty_level'] ?? 'medium',
                     'explanation' => $row['explanation'] ?? null
                 ]);
                 
@@ -118,15 +155,23 @@ class AdminQuestionController extends Controller
             
             fclose($handle);
             
+            if (empty($importedQuestions)) {
+                throw new \Exception('Không có câu hỏi nào được import. Vui lòng kiểm tra lại file.');
+            }
+            
             return response()->json([
                 'success' => true,
                 'questions' => $importedQuestions
             ]);
             
         } catch (\Exception $e) {
+            if (isset($handle) && is_resource($handle)) {
+                fclose($handle);
+            }
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }

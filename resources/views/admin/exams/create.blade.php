@@ -561,7 +561,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     // Thêm các câu hỏi mới vào bảng câu hỏi đã có
@@ -615,12 +620,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Hiển thị thông báo thành công
                     alert('Import câu hỏi thành công!');
                 } else {
-                    alert('Có lỗi xảy ra: ' + data.message);
+                    throw new Error(data.message || 'Có lỗi xảy ra khi import câu hỏi');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Có lỗi xảy ra khi import câu hỏi!');
+                alert('Lỗi: ' + error.message);
             });
         });
     }

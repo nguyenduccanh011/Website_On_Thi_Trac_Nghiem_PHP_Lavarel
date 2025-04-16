@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use App\Imports\QuestionsImport;  // Thêm dòng này
+use Maatwebsite\Excel\Facades\Excel;
 
 class AdminExamBankController extends Controller
 {
