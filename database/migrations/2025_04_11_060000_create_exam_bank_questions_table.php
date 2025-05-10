@@ -8,16 +8,16 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::create('exam_bank_categories', function (Blueprint $table) {
+        Schema::create('exam_bank_questions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('bank_id')->constrained('exam_banks', 'bank_id')->onDelete('cascade');
-            $table->foreignId('category_id')->references('category_id')->on('categories')->onDelete('cascade');
+            $table->foreignId('question_id')->constrained('questions')->onDelete('cascade');
             $table->timestamps();
         });
     }
 
     public function down()
     {
-        Schema::dropIfExists('exam_bank_categories');
+        Schema::dropIfExists('exam_bank_questions');
     }
 }; 

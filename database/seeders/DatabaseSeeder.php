@@ -12,10 +12,10 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             ExamCategorySeeder::class,
             ExamBankSeeder::class,
-            ExamSeeder::class,
             QuestionSeeder::class,
-            CategoriesTableSeeder::class,
-            ExamsTableSeeder::class,
+            ExamBankQuestionSeeder::class,
+            ExamSeeder::class,
+            ExamQuestionSeeder::class,
         ]);
     }
 } 

@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title') - Hệ Thống Thi Trực Tuyến</title>
-    
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
@@ -14,27 +15,33 @@
         body {
             background-color: #f8f9fa;
         }
+
         .navbar {
-            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .1);
         }
+
         .card {
-            box-shadow: 0 2px 4px rgba(0,0,0,.05);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .05);
             border: none;
         }
+
         .card-header {
             background-color: #fff;
-            border-bottom: 1px solid rgba(0,0,0,.125);
+            border-bottom: 1px solid rgba(0, 0, 0, .125);
         }
+
         .btn-primary {
             background-color: #0d6efd;
             border-color: #0d6efd;
         }
+
         .btn-primary:hover {
             background-color: #0b5ed7;
             border-color: #0a58ca;
         }
     </style>
 </head>
+
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-white">
         <div class="container">
@@ -53,49 +60,60 @@
                         <a class="nav-link" href="{{ route('exams.index') }}">Bài Thi</a>
                     </li>
                     @auth
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('exam-attempts.index') }}">Lịch Sử Thi</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('leaderboard.index') }}">Bảng Xếp Hạng</a>
-                        </li>
-                        <!-- // Chuyển hướng đến trang admin nếu người dùng là admin -->
-                        
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('admin.dashboard') }}">Trang admin</a>
-                        </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('exam-attempts.index') }}">Lịch Sử Thi</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('leaderboard.index') }}">Bảng Xếp Hạng</a>
+                    </li>
+                    <!-- Chỉ hiển thị nút admin cho người dùng có role là admin -->
+                    @if(Auth::check() && Auth::user()->role === 'admin')
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('admin.dashboard') }}">Trang admin</a>
+                    </li>
+                    @endif
                     @endauth
                 </ul>
                 <ul class="navbar-nav">
                     @guest
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('login') }}">Đăng Nhập</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('register') }}">Đăng Ký</a>
-                        </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('login') }}">Đăng Nhập</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('register') }}">Đăng Ký</a>
+                    </li>
                     @else
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                                {{ Auth::user()->name }}
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('dashboard') }}">
-                                        <i class="fas fa-tachometer-alt"></i> Dashboard
-                                    </a>
-                                </li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <form action="{{ route('logout') }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="dropdown-item">
-                                            <i class="fas fa-sign-out-alt"></i> Đăng Xuất
-                                        </button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            {{ Auth::user()->name }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" href="{{ route('profile') }}">
+                                    <i class="fas fa-user"></i> Hồ sơ
+                                </a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('dashboard') }}">
+                                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                                </a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <form action="{{ route('logout') }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="fas fa-sign-out-alt"></i> Đăng Xuất
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
                     @endguest
                 </ul>
             </div>
@@ -119,4 +137,5 @@
     <!-- Custom JS -->
     @stack('scripts')
 </body>
-</html> 
+
+</html>

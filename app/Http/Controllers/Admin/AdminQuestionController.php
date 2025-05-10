@@ -15,7 +15,7 @@ class AdminQuestionController extends Controller
 {
     public function index()
     {
-        $questions = Question::with(['exam', 'category', 'examBank'])
+        $questions = Question::with(['exam', 'category', 'examBanks'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         return view('admin.questions.index', compact('questions'));
@@ -30,31 +30,20 @@ class AdminQuestionController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'question_text' => 'required|string',
-            'option_a' => 'required|string',
-            'option_b' => 'required|string',
-            'option_c' => 'required|string',
-            'option_d' => 'required|string',
+            'question_text' => 'required|string|max:1000',
+            'option_a' => 'required|string|max:255',
+            'option_b' => 'required|string|max:255',
+            'option_c' => 'required|string|max:255',
+            'option_d' => 'required|string|max:255',
             'correct_answer' => 'required|in:A,B,C,D',
+            'explanation' => 'nullable|string|max:1000',
             'difficulty_level' => 'required|in:easy,medium,hard',
-            'explanation' => 'nullable|string'
         ]);
 
-        $question = Question::create([
-            'question_text' => $validated['question_text'],
-            'option_a' => $validated['option_a'],
-            'option_b' => $validated['option_b'],
-            'option_c' => $validated['option_c'],
-            'option_d' => $validated['option_d'],
-            'correct_answer' => $validated['correct_answer'],
-            'difficulty_level' => $validated['difficulty_level'],
-            'explanation' => $validated['explanation']
-        ]);
+        Question::create($validated);
 
-        return response()->json([
-            'success' => true,
-            'question' => $question
-        ]);
+        return redirect()->route('admin.questions.index')
+            ->with('success', 'Câu hỏi đã được tạo thành công.');
     }
 
     public function edit(Question $question)
@@ -68,17 +57,14 @@ class AdminQuestionController extends Controller
     public function update(Request $request, Question $question)
     {
         $validated = $request->validate([
-            'question_text' => 'required|string',
-            'option_a' => 'required|string',
-            'option_b' => 'required|string',
-            'option_c' => 'required|string',
-            'option_d' => 'required|string',
+            'question_text' => 'required|string|max:1000',
+            'option_a' => 'required|string|max:255',
+            'option_b' => 'required|string|max:255',
+            'option_c' => 'required|string|max:255',
+            'option_d' => 'required|string|max:255',
             'correct_answer' => 'required|in:A,B,C,D',
-            'explanation' => 'nullable|string',
-            'exam_id' => 'nullable|exists:exams,id',
-            'exam_bank_id' => 'nullable|exists:exam_banks,id',
-            'category_id' => 'required|exists:categories,id',
-            'difficulty_level' => 'required|in:easy,medium,hard'
+            'explanation' => 'nullable|string|max:1000',
+            'difficulty_level' => 'required|in:easy,medium,hard',
         ]);
 
         $question->update($validated);
@@ -90,30 +76,67 @@ class AdminQuestionController extends Controller
     public function destroy(Question $question)
     {
         $question->delete();
-        return response()->json([
-            'success' => true
-        ]);
+        return redirect()->route('admin.questions.index')
+            ->with('success', 'Câu hỏi đã được xóa thành công.');
     }
 
     public function import(Request $request)
     {
-        $request->validate([
-            'file' => 'required|mimes:csv,txt'
-        ]);
-
         try {
+            $request->validate([
+                'file' => 'required|mimes:csv,txt'
+            ]);
+
             $file = $request->file('file');
             $handle = fopen($file->getPathname(), 'r');
             
+            if (!$handle) {
+                throw new \Exception('Không thể mở file. Vui lòng kiểm tra lại file.');
+            }
+            
             // Đọc dòng header
             $header = fgetcsv($handle);
+            if (!$header) {
+                throw new \Exception('File không có dữ liệu hoặc không đúng định dạng.');
+            }
+            
             $header = array_map('strtolower', $header);
+            $requiredColumns = ['question_text', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_answer'];
+            
+            // Kiểm tra các cột bắt buộc
+            foreach ($requiredColumns as $column) {
+                if (!in_array($column, $header)) {
+                    throw new \Exception("Thiếu cột bắt buộc: {$column}");
+                }
+            }
             
             $importedQuestions = [];
+            $rowNumber = 1; // Bắt đầu từ 1 vì đã đọc header
             
             // Đọc từng dòng dữ liệu
             while (($data = fgetcsv($handle)) !== false) {
+                $rowNumber++;
+                
+                if (count($data) !== count($header)) {
+                    throw new \Exception("Dòng {$rowNumber} có số cột không khớp với header.");
+                }
+                
                 $row = array_combine($header, $data);
+                
+                // Validate dữ liệu
+                if (empty($row['question_text'])) {
+                    throw new \Exception("Dòng {$rowNumber}: Thiếu nội dung câu hỏi");
+                }
+                
+                if (empty($row['option_a']) || empty($row['option_b']) || 
+                    empty($row['option_c']) || empty($row['option_d'])) {
+                    throw new \Exception("Dòng {$rowNumber}: Thiếu đáp án");
+                }
+                
+                $correctAnswer = strtoupper(trim($row['correct_answer']));
+                if (!in_array($correctAnswer, ['A', 'B', 'C', 'D'])) {
+                    throw new \Exception("Dòng {$rowNumber}: Đáp án đúng phải là A, B, C hoặc D");
+                }
                 
                 // Tạo câu hỏi mới
                 $question = Question::create([
@@ -122,8 +145,8 @@ class AdminQuestionController extends Controller
                     'option_b' => $row['option_b'],
                     'option_c' => $row['option_c'],
                     'option_d' => $row['option_d'],
-                    'correct_answer' => strtoupper($row['correct_answer']),
-                    'difficulty_level' => $row['difficulty_level'],
+                    'correct_answer' => $correctAnswer,
+                    'difficulty_level' => $row['difficulty_level'] ?? 'medium',
                     'explanation' => $row['explanation'] ?? null
                 ]);
                 
@@ -132,16 +155,23 @@ class AdminQuestionController extends Controller
             
             fclose($handle);
             
+            if (empty($importedQuestions)) {
+                throw new \Exception('Không có câu hỏi nào được import. Vui lòng kiểm tra lại file.');
+            }
+            
             return response()->json([
                 'success' => true,
-                'message' => 'Import câu hỏi thành công!',
                 'questions' => $importedQuestions
             ]);
             
         } catch (\Exception $e) {
+            if (isset($handle) && is_resource($handle)) {
+                fclose($handle);
+            }
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Có lỗi xảy ra: ' . $e->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }

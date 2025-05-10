@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\AdminCategoryController;
 use App\Http\Controllers\Admin\AdminExamBankController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminProfileController;
+use App\Http\Controllers\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -48,6 +49,10 @@ Route::middleware(['auth'])->group(function () {
         return view('dashboard');
     })->name('dashboard');
 
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+
     // Quản lý câu hỏi
     Route::resource('questions', QuestionController::class);
 
@@ -70,15 +75,15 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/profile', [AdminProfileController::class, 'edit'])->name('profile');
     Route::put('/profile', [AdminProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [AdminProfileController::class, 'updatePassword'])->name('profile.password');
-    
+
     // Quản lý người dùng
     Route::resource('users', AdminUserController::class);
-    
+
     // Quản lý danh mục
     Route::resource('categories', AdminCategoryController::class)->parameters([
         'categories' => 'category:category_id'
     ]);
-    
+
     // Import routes - đặt trước resource routes
     Route::get('questions/template', [AdminQuestionController::class, 'downloadTemplate'])->name('questions.template');
     Route::post('questions/import', [AdminQuestionController::class, 'import'])->name('questions.import');
@@ -86,10 +91,14 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('exam-banks/import', [AdminExamBankController::class, 'import'])->name('exam-banks.import');
     Route::get('/exams/download-template', [AdminExamController::class, 'downloadTemplate'])->name('exams.download-template');
     Route::get('/exam-banks/download-template', [AdminExamBankController::class, 'downloadTemplate'])->name('exam-banks.download-template');
-    
+    Route::post('/exam-banks/{examBank}/add-question', [AdminExamBankController::class, 'addQuestion'])->name('exam-banks.add-question');
+    Route::post('/exam-banks/{examBank}/import-questions', [AdminExamBankController::class, 'importQuestions'])->name('exam-banks.import-questions');
+
     // Quản lý ngân hàng câu hỏi
     Route::resource('exam-banks', AdminExamBankController::class);
-    
+    Route::post('exam-banks/{examBank}/random-questions', [AdminExamController::class, 'getRandomQuestions'])
+        ->name('exam-banks.random-questions');
+
     // Quản lý câu hỏi
     Route::get('/questions', [AdminQuestionController::class, 'index'])->name('questions.index');
     Route::get('/questions/create', [AdminQuestionController::class, 'create'])->name('questions.create');
@@ -99,10 +108,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::delete('/questions/{question}', [AdminQuestionController::class, 'destroy'])->name('questions.destroy');
     Route::post('/questions/import', [AdminQuestionController::class, 'import'])->name('questions.import');
     Route::get('/questions/download-template', [AdminQuestionController::class, 'downloadTemplate'])->name('questions.download-template');
-    
+
     // Quản lý đề thi
     Route::resource('exams', AdminExamController::class);
-    
+
     // Quản lý báo cáo
     Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/exam/{id}', [AdminReportController::class, 'examReport'])->name('reports.exam');

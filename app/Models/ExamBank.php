@@ -20,19 +20,18 @@ class ExamBank extends Model
         'description',
         'total_questions',
         'difficulty_level',
-        'time_limit',
         'is_active'
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
-        'total_questions' => 'integer',
-        'time_limit' => 'integer'
+        'total_questions' => 'integer'
     ];
 
-    public function questions(): HasMany
+    public function questions()
     {
-        return $this->hasMany(Question::class, 'exam_bank_id', 'bank_id');
+        return $this->belongsToMany(Question::class, 'exam_bank_questions', 'bank_id', 'question_id')
+                    ->withTimestamps();
     }
 
     public function categories(): BelongsToMany
@@ -50,6 +49,7 @@ class ExamBank extends Model
     {
         $this->total_questions = $this->questions()->count();
         $this->save();
+        return $this;
     }
 
     public function getRandomQuestions($count)

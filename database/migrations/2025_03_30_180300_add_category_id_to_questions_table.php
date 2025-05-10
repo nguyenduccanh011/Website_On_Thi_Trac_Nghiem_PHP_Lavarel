@@ -9,16 +9,16 @@ return new class extends Migration
     public function up()
     {
         Schema::table('questions', function (Blueprint $table) {
-            $table->foreignId('exam_bank_id')->nullable()->after('exam_id')
-                  ->references('bank_id')->on('exam_banks')->onDelete('set null');
+            $table->foreignId('category_id')->nullable()->after('id')
+                  ->references('category_id')->on('categories')->onDelete('set null');
         });
     }
 
     public function down()
     {
         Schema::table('questions', function (Blueprint $table) {
-            $table->dropForeign(['exam_bank_id']);
-            $table->dropColumn('exam_bank_id');
+            $table->dropForeign(['category_id']);
+            $table->dropColumn('category_id');
         });
     }
 }; 

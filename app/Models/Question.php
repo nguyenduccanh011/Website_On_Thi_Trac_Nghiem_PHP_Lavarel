@@ -61,9 +61,10 @@ class Question extends Model
         return $this->belongsTo(Exam::class);
     }
 
-    public function examBank()
+    public function examBanks()
     {
-        return $this->belongsTo(ExamBank::class, 'exam_bank_id', 'bank_id');
+        return $this->belongsToMany(ExamBank::class, 'exam_bank_questions', 'question_id', 'bank_id')
+                    ->withTimestamps();
     }
 
     public function category()

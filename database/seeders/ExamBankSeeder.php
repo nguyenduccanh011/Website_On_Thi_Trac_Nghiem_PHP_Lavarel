@@ -9,94 +9,143 @@ class ExamBankSeeder extends Seeder
 {
     public function run()
     {
+        // Tắt kiểm tra khóa ngoại tạm thời
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        
+        // Xóa tất cả dữ liệu cũ trong bảng
+        DB::table('exam_banks')->truncate();
+        
+        // Bật lại kiểm tra khóa ngoại
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
         $examBanks = [
+            // TOEIC Banks
             [
-                'bank_id' => 1,
-                'name' => 'TOEIC Reading Practice',
-                'slug' => 'toeic-reading-practice',
-                'category_id' => 1, // TOEIC
-                'description' => 'Ngân hàng câu hỏi đọc hiểu TOEIC',
-                'difficulty_level' => 'medium',
+                'name' => 'TOEIC Reading Part 5 & 6',
+                'slug' => 'toeic-reading-part-5-6',
+                'description' => 'Ngân hàng câu hỏi TOEIC Reading Part 5 & 6 - Incomplete Sentences & Text Completion',
                 'total_questions' => 0,
-                'time_limit' => 60,
                 'is_active' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'bank_id' => 2,
-                'name' => 'TOEIC Listening Practice',
-                'slug' => 'toeic-listening-practice',
-                'category_id' => 1, // TOEIC
-                'description' => 'Ngân hàng câu hỏi nghe hiểu TOEIC',
-                'difficulty_level' => 'medium',
+                'name' => 'TOEIC Reading Part 7',
+                'slug' => 'toeic-reading-part-7',
+                'description' => 'Ngân hàng câu hỏi TOEIC Reading Part 7 - Reading Comprehension',
                 'total_questions' => 0,
-                'time_limit' => 45,
                 'is_active' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'bank_id' => 3,
+                'name' => 'TOEIC Listening Part 1 & 2',
+                'slug' => 'toeic-listening-part-1-2',
+                'description' => 'Ngân hàng câu hỏi TOEIC Listening Part 1 & 2 - Photographs & Question-Response',
+                'total_questions' => 0,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'TOEIC Listening Part 3 & 4',
+                'slug' => 'toeic-listening-part-3-4',
+                'description' => 'Ngân hàng câu hỏi TOEIC Listening Part 3 & 4 - Conversations & Talks',
+                'total_questions' => 0,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            // IELTS Banks
+            [
                 'name' => 'IELTS Academic Reading',
                 'slug' => 'ielts-academic-reading',
-                'category_id' => 2, // IELTS
-                'description' => 'Ngân hàng câu hỏi đọc hiểu IELTS Academic',
-                'difficulty_level' => 'hard',
+                'description' => 'Ngân hàng câu hỏi IELTS Academic Reading - Academic Texts',
                 'total_questions' => 0,
-                'time_limit' => 60,
                 'is_active' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'bank_id' => 4,
-                'name' => 'IELTS General Writing',
-                'slug' => 'ielts-general-writing',
-                'category_id' => 2, // IELTS
-                'description' => 'Ngân hàng câu hỏi viết IELTS General',
-                'difficulty_level' => 'medium',
+                'name' => 'IELTS General Reading',
+                'slug' => 'ielts-general-reading',
+                'description' => 'Ngân hàng câu hỏi IELTS General Reading - Everyday Texts',
                 'total_questions' => 0,
-                'time_limit' => 60,
                 'is_active' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'bank_id' => 5,
-                'name' => 'TOEFL Reading Comprehension',
-                'slug' => 'toefl-reading-comprehension',
-                'category_id' => 3, // TOEFL
-                'description' => 'Ngân hàng câu hỏi đọc hiểu TOEFL',
-                'difficulty_level' => 'hard',
+                'name' => 'IELTS Writing Task 1',
+                'slug' => 'ielts-writing-task-1',
+                'description' => 'Ngân hàng đề bài IELTS Writing Task 1 - Data Description',
                 'total_questions' => 0,
-                'time_limit' => 60,
                 'is_active' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'bank_id' => 6,
+                'name' => 'IELTS Writing Task 2',
+                'slug' => 'ielts-writing-task-2',
+                'description' => 'Ngân hàng đề bài IELTS Writing Task 2 - Essay Writing',
+                'total_questions' => 0,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            // TOEFL Banks
+            [
+                'name' => 'TOEFL Reading',
+                'slug' => 'toefl-reading',
+                'description' => 'Ngân hàng câu hỏi TOEFL Reading - Academic Passages',
+                'total_questions' => 0,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'TOEFL Listening',
+                'slug' => 'toefl-listening',
+                'description' => 'Ngân hàng câu hỏi TOEFL Listening - Lectures & Conversations',
+                'total_questions' => 0,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            // Business English Banks
+            [
                 'name' => 'Business Communication',
                 'slug' => 'business-communication',
-                'category_id' => 4, // Business English
-                'description' => 'Ngân hàng câu hỏi giao tiếp trong kinh doanh',
-                'difficulty_level' => 'medium',
+                'description' => 'Ngân hàng câu hỏi về giao tiếp trong kinh doanh',
                 'total_questions' => 0,
-                'time_limit' => 45,
                 'is_active' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
-                'bank_id' => 7,
-                'name' => 'General Grammar',
-                'slug' => 'general-grammar',
-                'category_id' => 5, // General English
-                'description' => 'Ngân hàng câu hỏi ngữ pháp tiếng Anh tổng quát',
-                'difficulty_level' => 'easy',
+                'name' => 'Business Writing',
+                'slug' => 'business-writing',
+                'description' => 'Ngân hàng câu hỏi về viết thư tín thương mại',
                 'total_questions' => 0,
-                'time_limit' => 30,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            // General English Banks
+            [
+                'name' => 'Grammar Practice',
+                'slug' => 'grammar-practice',
+                'description' => 'Ngân hàng câu hỏi ngữ pháp tiếng Anh tổng quát',
+                'total_questions' => 0,
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Vocabulary Builder',
+                'slug' => 'vocabulary-builder',
+                'description' => 'Ngân hàng câu hỏi từ vựng tiếng Anh',
+                'total_questions' => 0,
                 'is_active' => true,
                 'created_at' => now(),
                 'updated_at' => now(),

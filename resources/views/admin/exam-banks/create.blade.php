@@ -30,16 +30,17 @@
                         </div>
 
                         <div class="mb-3">
-                                    <label for="category_ids" class="form-label">Danh Mục</label>
-                                    <select class="form-select @error('category_ids') is-invalid @enderror" 
-                                        id="category_ids" name="category_ids[]" multiple required>
+                            <label for="category_id" class="form-label">Danh Mục</label>
+                            <select class="form-select @error('category_id') is-invalid @enderror" 
+                                id="category_id" name="category_id" required>
+                                <option value="">Chọn Danh Mục</option>
                                 @foreach($categories as $category)
-                                            <option value="{{ $category->category_id }}" {{ in_array($category->category_id, old('category_ids', [])) ? 'selected' : '' }}>
+                                    <option value="{{ $category->category_id }}" {{ old('category_id') == $category->category_id ? 'selected' : '' }}>
                                         {{ $category->name }}
                                     </option>
                                 @endforeach
                             </select>
-                                    @error('category_ids')
+                            @error('category_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
@@ -72,7 +73,7 @@
                         <div class="mb-3">
                             <label for="total_questions" class="form-label">Số Câu Hỏi</label>
                             <input type="number" class="form-control @error('total_questions') is-invalid @enderror" 
-                                        id="total_questions" name="total_questions" value="{{ old('total_questions') }}" min="1" required>
+                                        id="total_questions" name="total_questions" value="{{ old('total_questions') }}" min="1" required readonly>
                             @error('total_questions')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -128,9 +129,9 @@
                                 @foreach($questions as $question)
                                     <tr>
                                         <td>
-                                                    <input type="checkbox" name="existing_questions[]" 
-                                                        value="{{ $question->id }}" 
-                                                        class="question-checkbox">
+                                            <input type="checkbox" name="questions[]" 
+                                                value="{{ $question->id }}" 
+                                                class="question-checkbox">
                                         </td>
                                         <td>{{ $question->question_text }}</td>
                                         <td>
@@ -145,6 +146,17 @@
                     </div>
                             </div>
                 </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="is_active" name="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="is_active">Kích hoạt</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <div class="text-end mt-3">
                             <button type="submit" class="btn btn-primary">Thêm Ngân Hàng</button>
@@ -213,8 +225,15 @@
         const importForm = document.getElementById('importForm');
         const examBankForm = document.getElementById('examBankForm');
         const addNewQuestionBtn = document.getElementById('addNewQuestion');
+        const totalQuestionsInput = document.getElementById('total_questions');
         let newQuestionCount = 0;
         let isSubmitting = false;
+
+        // Hàm cập nhật tổng số câu hỏi
+        function updateTotalQuestions() {
+            const totalQuestions = selectedQuestionsTable.querySelectorAll('tbody tr').length;
+            totalQuestionsInput.value = totalQuestions;
+        }
 
         // Xử lý nút thêm dòng câu hỏi mới
         if (addNewQuestionBtn) {
@@ -280,13 +299,14 @@
                 tbody.appendChild(newRow);
                 selectedQuestions.add(questionId);
                 updateQuestionNumbers();
+                updateTotalQuestions();
             });
         }
 
         // Xử lý form import
         if (importForm) {
             importForm.addEventListener('submit', function(e) {
-            e.preventDefault();
+                e.preventDefault();
                 
                 const formData = new FormData(this);
                 
@@ -309,7 +329,7 @@
                                 const newRow = document.createElement('tr');
                                 newRow.innerHTML = `
                                     <td>
-                                        <input type="checkbox" name="existing_questions[]" 
+                                        <input type="checkbox" name="questions[]" 
                                             value="${question.id}" 
                                             class="question-checkbox">
                                     </td>
@@ -326,19 +346,24 @@
                                 const checkbox = newRow.querySelector('.question-checkbox');
                                 checkbox.addEventListener('change', function() {
                                     if (this.checked) {
-                                        selectedQuestions.add(this.value);
-                                        addQuestionToTable(this);
+                                        if (!selectedQuestions.has(this.value)) {
+                                            selectedQuestions.add(this.value);
+                                            addQuestionToTable(this);
+                                        }
                                     } else {
                                         selectedQuestions.delete(this.value);
                                         removeQuestionFromTable(this.value);
                                     }
                                     updateQuestionNumbers();
+                                    updateTotalQuestions();
                                 });
 
                                 // Tự động chọn và thêm vào bảng câu hỏi đã chọn
                                 checkbox.checked = true;
-                                selectedQuestions.add(question.id);
-                                addQuestionToTable(checkbox);
+                                if (!selectedQuestions.has(question.id)) {
+                                    selectedQuestions.add(question.id);
+                                    addQuestionToTable(checkbox);
+                                }
                             }
                         });
                         
@@ -349,8 +374,9 @@
                         // Hiển thị thông báo thành công
                         alert('Import câu hỏi thành công!');
 
-                        // Cập nhật lại số thứ tự
+                        // Cập nhật lại số thứ tự và tổng số câu hỏi
                         updateQuestionNumbers();
+                        updateTotalQuestions();
                     } else {
                         alert('Có lỗi xảy ra: ' + data.message);
                     }
@@ -367,27 +393,33 @@
             questionCheckboxes.forEach(checkbox => {
                 checkbox.checked = this.checked;
                 if (this.checked) {
-                    selectedQuestions.add(checkbox.value);
-                    addQuestionToTable(checkbox);
+                    if (!selectedQuestions.has(checkbox.value)) {
+                        selectedQuestions.add(checkbox.value);
+                        addQuestionToTable(checkbox);
+                    }
                 } else {
                     selectedQuestions.delete(checkbox.value);
                     removeQuestionFromTable(checkbox.value);
                 }
             });
             updateQuestionNumbers();
+            updateTotalQuestions();
         });
 
         // Xử lý chọn từng câu hỏi
         questionCheckboxes.forEach(checkbox => {
             checkbox.addEventListener('change', function() {
                 if (this.checked) {
-                    selectedQuestions.add(this.value);
-                    addQuestionToTable(this);
+                    if (!selectedQuestions.has(this.value)) {
+                        selectedQuestions.add(this.value);
+                        addQuestionToTable(this);
+                    }
                 } else {
                     selectedQuestions.delete(this.value);
                     removeQuestionFromTable(this.value);
                 }
                 updateQuestionNumbers();
+                updateTotalQuestions();
             });
         });
 
@@ -405,6 +437,7 @@
                     checkbox.checked = false;
                 }
                 updateQuestionNumbers();
+                updateTotalQuestions();
             }
         });
 
@@ -415,8 +448,11 @@
             const difficultyLevel = row.cells[2].querySelector('.badge').textContent;
             const difficultyClass = row.cells[2].querySelector('.badge').className;
             
-            // Xóa câu hỏi cũ nếu đã tồn tại
-            removeQuestionFromTable(checkbox.value);
+            // Kiểm tra xem câu hỏi đã tồn tại trong bảng chưa
+            const existingRow = document.querySelector(`#selectedQuestionsTable tr[data-question-id="${checkbox.value}"]`);
+            if (existingRow) {
+                return; // Nếu đã tồn tại thì không thêm nữa
+            }
             
             // Thêm câu hỏi mới
             const newRow = document.createElement('tr');
@@ -433,6 +469,7 @@
             `;
             selectedQuestionsTable.querySelector('tbody').appendChild(newRow);
             updateQuestionNumbers();
+            updateTotalQuestions();
         }
 
         // Xóa câu hỏi khỏi bảng
@@ -441,6 +478,7 @@
             if (row) {
                 row.remove();
                 updateQuestionNumbers();
+                updateTotalQuestions();
             }
         }
 
@@ -458,34 +496,45 @@
         // Xử lý khi submit form
         if (examBankForm) {
             examBankForm.addEventListener('submit', function(e) {
-                e.preventDefault();
+                if (isSubmitting) return;
+                isSubmitting = true;
                 
                 // Kiểm tra danh mục
-                const categorySelect = document.getElementById('category_ids');
+                const categorySelect = document.getElementById('category_id');
                 if (!categorySelect.value) {
                     alert('Vui lòng chọn danh mục!');
+                    isSubmitting = false;
                     return;
                 }
 
-                // Lấy danh sách câu hỏi đã chọn
-                const existingQuestions = Array.from(document.querySelectorAll('input[name="existing_questions[]"]:checked')).map(cb => cb.value);
+                // Lấy danh sách câu hỏi đã chọn từ bảng selectedQuestionsTable
+                const selectedQuestionIds = Array.from(selectedQuestionsTable.querySelectorAll('tbody tr'))
+                    .map(row => row.dataset.questionId)
+                    .filter(id => id); // Loại bỏ các id null hoặc undefined
+
+                // Xóa tất cả input hidden cũ của questions nếu có
+                document.querySelectorAll('input[name="questions[]"][type="hidden"]').forEach(el => el.remove());
+                
+                // Xóa tất cả checkbox của questions
+                document.querySelectorAll('input[name="questions[]"][type="checkbox"]').forEach(el => el.remove());
                 
                 // Thêm input hidden để gửi danh sách câu hỏi
-                if (existingQuestions.length > 0) {
+                selectedQuestionIds.forEach(questionId => {
                     const input = document.createElement('input');
                     input.type = 'hidden';
-                    input.name = 'existing_questions';
-                    input.value = existingQuestions.join(',');
-                    this.appendChild(input);
-                }
+                    input.name = 'questions[]';
+                    input.value = questionId;
+                    examBankForm.appendChild(input);
+                });
 
-                // Submit form
+                // Gửi form
                 this.submit();
             });
         }
 
         // Cập nhật số thứ tự ban đầu
         updateQuestionNumbers();
+        updateTotalQuestions();
     });
 </script>
 @endpush

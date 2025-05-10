@@ -52,7 +52,7 @@
                     <h5 class="mb-3">Chi Tiết Bài Làm</h5>
                     @foreach($attempt->exam->questions as $index => $question)
                         @php
-                            $userAnswer = $attempt->userAnswers->where('question_id', $question->question_id)->first();
+                            $userAnswer = $attempt->userAnswers->where('question_id', $question->id)->first();
                             $isCorrect = $userAnswer ? $userAnswer->is_correct : false;
                         @endphp
                         <div class="card mb-3 {{ $isCorrect ? 'border-success' : 'border-danger' }}">
@@ -68,6 +68,12 @@
                                 <p class="card-text">{{ $question->question_text }}</p>
                                 
                                 <div class="options">
+                                    @if(!$userAnswer || !$userAnswer->selected_answer)
+                                        <div class="alert alert-warning mb-3">
+                                            <strong>Chú ý:</strong> Bạn chưa chọn đáp án nào cho câu hỏi này.
+                                        </div>
+                                    @endif
+
                                     @foreach(['A', 'B', 'C', 'D'] as $option)
                                         @php
                                             $optionText = $question->{'option_' . strtolower($option)};
@@ -76,9 +82,9 @@
                                         @endphp
                                         <div class="form-check mb-2">
                                             <input class="form-check-input" type="radio" 
-                                                   disabled
-                                                   {{ $isSelected ? 'checked' : '' }}
-                                                   {{ $isCorrectAnswer ? 'checked' : '' }}>
+                                                disabled
+                                                {{ $isSelected ? 'checked' : '' }}
+                                                {{ $isCorrectAnswer ? 'checked' : '' }}>
                                             <label class="form-check-label {{ $isSelected ? ($isCorrect ? 'text-success' : 'text-danger') : ($isCorrectAnswer ? 'text-success' : '') }}">
                                                 {{ $optionText }}
                                                 @if($isSelected)
@@ -91,6 +97,7 @@
                                         </div>
                                     @endforeach
                                 </div>
+
                             </div>
                         </div>
                     @endforeach
